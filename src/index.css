@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --forest: #1B4332;
+    --forest-dark: #081C15;
+    --forest-light: #2D6A4F;
+    --wheat: #D4A24E;
+    --wheat-light: #F4E8C1;
+    --sand: #FAF7F0;
+    --charcoal: #2B2B2B;
+    --clay: #8C482A;
+  }
+
+  body {
+    font-family: 'Inter', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background-color: #FAF7F0;
+    color: #2B2B2B;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, .font-heading {
+    font-family: 'Inter', 'Yantramanav', sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  .font-devanagari {
+    font-family: 'Yantramanav', sans-serif;
+  }
+}
+
+/* High Density Compact scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #FAF7F0;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(212, 162, 78, 0.4);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #1B4332;
+}
+
+/* Authentic Agri-Scanner Laser animation */
+@keyframes scan-laser {
+  0% {
+    top: 0%;
+    opacity: 0.9;
+  }
+  50% {
+    top: 96%;
+    opacity: 1;
+  }
+  100% {
+    top: 0%;
+    opacity: 0.9;
+  }
+}
+
+.animate-scan-laser {
+  animation: scan-laser 2.2s ease-in-out infinite;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Print styles for Kisan Prescription Slip */
+@media print {
+  body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
+
