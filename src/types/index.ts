@@ -1,107 +1,149 @@
-export type Language = 'hi' | 'en' | 'mr' | 'te' | 'ta' | 'kn' | 'gu' | 'pa';
+// Smart India Hackathon - Problem Statement 26033
+// Ministry of Consumer Affairs, Food & Public Distribution (DoCA)
 
-export type SeverityLevel = 'mild' | 'moderate' | 'severe' | 'healthy';
+export type UserRole = 'farmer' | 'buyer';
 
-export type CropCategory = 
-  | 'potato'
-  | 'tomato'
-  | 'rice'
-  | 'wheat'
-  | 'cotton'
-  | 'chilli'
-  | 'mustard'
-  | 'sugarcane'
-  | 'soybean'
-  | 'groundnut'
-  | 'maize'
-  | 'onion'
-  | 'gram'
-  | 'tea'
-  | 'mango'
-  | 'banana';
+export type QualityGrade = 'Grade A (Premium)' | 'Grade B (Standard)' | 'Grade C (Processing)';
 
-export interface TreatmentChemical {
-  tradeName: string;
-  genericName: string;
-  dosagePerLiter: string;
-  dosagePerAcre: string;
-  waterPerAcre: string;
-  applicationMethod: string;
-  waitingPeriodDays: number; // Pre-harvest interval (PHI)
-  sprayIntervalDays: string;
-  cibrcApproved: boolean;
-  precautions: string[];
-}
-
-export interface TreatmentOrganic {
+export interface FarmerProfile {
+  id: string;
   name: string;
-  nameHindi: string;
-  ingredients: string;
-  dosagePerLiter: string;
-  preparationMethod: string;
-  applicationSchedule: string;
-  bestTime: string;
-  costEfficiency: string;
+  phone: string;
+  isFPO: boolean;
+  fpoName?: string;
+  state: string;
+  district: string;
+  village: string;
+  primaryCrops: string[];
 }
 
-export interface DiseaseInfo {
+export interface ProduceListing {
   id: string;
-  crop: CropCategory;
-  cropNameEn: string;
-  cropNameHi: string;
-  cropIcon: string;
-  nameEn: string;
-  nameHi: string;
-  pathogenType: 'Fungal' | 'Bacterial' | 'Viral' | 'Pest' | 'Physiological' | 'None';
-  scientificName: string;
-  severity: SeverityLevel;
-  confidenceRange: [number, number]; // e.g. [91, 98]
-  symptoms: {
-    en: string[];
-    hi: string[];
+  farmerId: string;
+  farmerName: string;
+  farmerPhone: string;
+  isFPO: boolean;
+  fpoName?: string;
+  cropId: string;
+  cropName: string;
+  variety: string;
+  grade: QualityGrade;
+  quantityAvailableQuintals: number;
+  minOrderQuintals: number;
+  askingPricePerQuintal: number;
+  mandiMiddlemanPricePerQuintal: number; // APMC middleman benchmark
+  retailConsumerPricePerQuintal: number; // Traditional retail chain price
+  harvestDate: string;
+  location: {
+    village: string;
+    district: string;
+    state: string;
+    lat: number;
+    lng: number;
   };
-  causes: {
-    en: string;
-    hi: string;
-  };
-  favorableWeather: {
-    temp: string;
-    humidity: string;
-    season: string;
-  };
-  treatments: {
-    chemical: TreatmentChemical[];
-    organic: TreatmentOrganic[];
-  };
-  preventionTips: {
-    en: string[];
-    hi: string[];
-  };
-  sampleImage: string;
-  fallbackColor: string;
+  pickupPointName: string;
+  createdAt: string;
+  status: 'active' | 'sold_out';
 }
 
-export interface ScanResult {
+export type OrderStatus = 'confirmed' | 'aggregated' | 'in_transit' | 'delivered';
+
+export interface MarketplaceOrder {
   id: string;
-  timestamp: string;
-  crop: CropCategory;
-  cropNameEn: string;
-  cropNameHi: string;
-  disease: DiseaseInfo;
-  confidence: number;
-  imageUrl: string;
-  severity: SeverityLevel;
-  farmAreaAcres?: number;
-  fieldLocation?: string;
-  status?: 'Treated' | 'Follow-up' | 'Critical' | 'Healthy';
-  notes?: string;
-  userId?: string;
-  userPhone?: string;
-  userName?: string;
+  orderNumber: string;
+  listingId: string;
+  cropName: string;
+  farmerName: string;
+  farmerPhone: string;
+  farmerPickupLocation: string;
+  buyerName: string;
+  buyerPhone: string;
+  buyerType: 'individual' | 'bulk';
+  deliveryAddress: {
+    district: string;
+    state: string;
+    addressLine: string;
+    pincode: string;
+  };
+  quantityQuintals: number;
+  pricePerQuintal: number;
+  produceTotal: number;
+  logisticsFee: number;
+  totalAmount: number;
+  traditionalChainCost: number; // what consumer would pay in middleman system
+  consumerSavings: number; // traditionalChainCost - totalAmount
+  farmerEarnings: number;
+  farmerGainVsMandi: number; // farmerEarnings - (quantity * mandiPrice)
+  status: OrderStatus;
+  createdAt: string;
+  estimatedDeliveryDays: number;
+  logisticsStep: string;
+  isScheduledPickup: boolean;
+  scheduledDate?: string;
 }
 
-export interface DosageInput {
-  areaValue: number;
-  areaUnit: 'acre' | 'bigha' | 'hectare' | 'guntha';
-  tankCapacityLiters: number;
+// AI Demand & Pricing Forecasting Types
+export interface HistoricalDataPoint {
+  month: string;
+  avgMandiPrice: number;
+  directFarmerPrice: number;
+  consumerRetailPrice: number;
+  demandVolumeQuintals: number;
+  supplyVolumeQuintals: number;
+  arrivalTons: number;
+}
+
+export interface CropForecastResult {
+  cropId: string;
+  cropNameEn: string;
+  cropNameHi?: string;
+  cropIcon?: string;
+  state: string;
+  district: string;
+  currentMandiPrice: number;
+  predictedDemandQuintals: number;
+  demandTrend: 'rising' | 'steady' | 'declining';
+  suggestedFarmerPrice: number;
+  recommendedConsumerPrice: number;
+  farmerMarginGainPercent: number;
+  consumerPriceDropPercent: number;
+  confidenceScore: number;
+  seasonalNotesEn?: string;
+  seasonalNotesHi?: string;
+  next3MonthsForecast: {
+    month: string;
+    projectedDemand: number;
+    recommendedPrice: number;
+    projectedSupply?: number;
+  }[];
+  historicalData: HistoricalDataPoint[];
+}
+
+// Logistics & Route Optimization Types
+export type GeoPointType = 'farm_pickup' | 'aggregation_hub' | 'consumer_drop' | 'bulk_depot' | 'delivery_point';
+
+export interface GeoPoint {
+  id: string;
+  label: string;
+  name: string;
+  type: GeoPointType;
+  lat: number;
+  lng: number;
+  district: string;
+  cargoQuintals: number;
+}
+
+export interface RouteOptimizationResult {
+  routeId: string;
+  originHub: GeoPoint;
+  pickups: GeoPoint[];
+  dropoffs: GeoPoint[];
+  orderedWaypoints: GeoPoint[];
+  totalDistanceKm: number;
+  unoptimizedDistanceKm: number;
+  distanceSavedKm: number;
+  estimatedTransitHours: number;
+  fuelCostSavingsInr: number;
+  carbonEmissionSavedKg: number;
+  logisticsCostPerQuintalInr: number;
 }

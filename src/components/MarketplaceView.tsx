@@ -1,0 +1,301 @@
+import React, { useState, useMemo } from 'react';
+import { ProduceListing, MarketplaceOrder } from '../types';
+import { Search, Filter, ShoppingBag, MapPin, Calendar, CheckCircle2, TrendingDown, ArrowRight, ShieldCheck } from 'lucide-react';
+import { CheckoutModal } from './CheckoutModal';
+
+interface MarketplaceViewProps {
+  listings: ProduceListing[];
+  onPlaceOrder: (order: MarketplaceOrder) => void;
+}
+
+export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
+  listings,
+  onPlaceOrder,
+}) => {
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedCropFilter, setSelectedCropFilter] = useState<string>('all');
+  const [selectedStateFilter, setSelectedStateFilter] = useState<string>('all');
+  const [buyerMode, setBuyerMode] = useState<'all' | 'bulk' | 'individual'>('all');
+
+  // Checkout modal state
+  const [selectedListingForCheckout, setSelectedListingForCheckout] = useState<ProduceListing | null>(null);
+
+  // Filter listings
+  const filteredListings = useMemo(() => {
+    return (listings || []).filter((listing) => {
+      if (!listing) return false;
+      // Search text match
+      const query = (searchQuery || '').toLowerCase().trim();
+      const cropName = (listing.cropName || '').toLowerCase();
+      const district = (listing.location?.district || '').toLowerCase();
+      const state = (listing.location?.state || '').toLowerCase();
+      const farmerName = (listing.farmerName || '').toLowerCase();
+      const variety = (listing.variety || '').toLowerCase();
+
+      const matchesSearch =
+        !query ||
+        cropName.includes(query) ||
+        district.includes(query) ||
+        state.includes(query) ||
+        farmerName.includes(query) ||
+        variety.includes(query);
+
+      if (!matchesSearch) return false;
+
+      // Crop filter
+      if (selectedCropFilter !== 'all' && listing.cropId !== selectedCropFilter) {
+        return false;
+      }
+
+      // State filter
+      if (selectedStateFilter !== 'all' && listing.location?.state !== selectedStateFilter) {
+        return false;
+      }
+
+      // Buyer mode filter (Bulk: available quantity >= 10 Quintals)
+      if (buyerMode === 'bulk' && (listing.quantityAvailableQuintals || 0) < 10) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [listings, searchQuery, selectedCropFilter, selectedStateFilter, buyerMode]);
+
+  // Unique states from current listings
+  const availableStates = Array.from(
+    new Set((listings || []).map((l) => l.location?.state).filter((s): s is string => Boolean(s)))
+  );
+
+  return (
+    <div id="marketplace-view-container" className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 text-stone-800">
+      {/* Top Banner with Real Impact Numbers */}
+      <div className="bg-stone-50 p-5 sm:p-6 rounded-2xl border border-stone-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#1B4332] text-xs font-bold font-mono mb-1">
+            <span>Direct Farmgate Sourcing (No Commission Agents)</span>
+          </div>
+          <h1 className="text-xl sm:text-2xl font-black text-stone-900">
+            Buyer Marketplace — Consumer & Institutional Bulk Supply
+          </h1>
+          <p className="text-xs sm:text-sm text-stone-600">
+            All prices shown are direct farmgate quotes with integrated consolidated logistics support.
+          </p>
+        </div>
+
+        {/* Buyer View Selector (Single Unified View) */}
+        <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-stone-300 self-start md:self-auto">
+          <button
+            onClick={() => setBuyerMode('all')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              buyerMode === 'all'
+                ? 'bg-[#1B4332] text-white shadow-xs'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            All Listings
+          </button>
+          <button
+            onClick={() => setBuyerMode('individual')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              buyerMode === 'individual'
+                ? 'bg-[#1B4332] text-white shadow-xs'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            Standard Orders (1–5 Qtl)
+          </button>
+          <button
+            onClick={() => setBuyerMode('bulk')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              buyerMode === 'bulk'
+                ? 'bg-[#D4A24E] text-[#1B4332] font-black shadow-xs'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            Bulk Orders (≥10 Qtl)
+          </button>
+        </div>
+      </div>
+
+      {/* Search & Filter Controls */}
+      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-white p-4 rounded-xl border border-stone-200 shadow-xs">
+        <div className="sm:col-span-6 relative">
+          <Search className="w-4 h-4 text-stone-400 absolute left-3 top-3" />
+          <input
+            type="text"
+            id="marketplace-search-input"
+            placeholder="Search by crop, district (e.g. Nashik, Agra), or state..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 bg-stone-50 border border-stone-300 rounded-lg text-xs sm:text-sm font-medium focus:ring-2 focus:ring-[#1B4332] focus:outline-hidden"
+          />
+        </div>
+
+        <div className="sm:col-span-3">
+          <select
+            value={selectedCropFilter}
+            onChange={(e) => setSelectedCropFilter(e.target.value)}
+            className="w-full py-2 px-3 bg-stone-50 border border-stone-300 rounded-lg text-xs font-bold text-stone-800 cursor-pointer"
+          >
+            <option value="all">All Crops</option>
+            <option value="onion">Onion</option>
+            <option value="potato">Potato</option>
+            <option value="tomato">Tomato</option>
+            <option value="wheat">Wheat</option>
+          </select>
+        </div>
+
+        <div className="sm:col-span-3">
+          <select
+            value={selectedStateFilter}
+            onChange={(e) => setSelectedStateFilter(e.target.value)}
+            className="w-full py-2 px-3 bg-stone-50 border border-stone-300 rounded-lg text-xs font-bold text-stone-800 cursor-pointer"
+          >
+            <option value="all">All States</option>
+            {availableStates.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Produce Listings Grid with Embedded Price Comparison (Requirement 3 & 7) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between text-xs text-stone-500 font-medium">
+          <span>
+            Showing <strong>{filteredListings.length}</strong> active farmgate produce listings
+          </span>
+          <span>Prices update dynamically with regional wholesale mandis</span>
+        </div>
+
+        {filteredListings.length === 0 ? (
+          <div className="bg-stone-50 p-10 rounded-2xl border border-dashed border-stone-300 text-center space-y-2">
+            <p className="text-sm font-bold text-stone-600">No produce matching your criteria found.</p>
+            <p className="text-xs text-stone-400">Try clearing your search query or selecting 'All Crops'.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filteredListings.map((listing) => {
+              const platformPriceKg = listing.askingPricePerQuintal / 100;
+              const mandiMiddlemanKg = listing.mandiMiddlemanPricePerQuintal / 100;
+              const retailTraditionalKg = listing.retailConsumerPricePerQuintal / 100;
+              const consumerSavingsPercent = Math.round(
+                ((retailTraditionalKg - platformPriceKg) / retailTraditionalKg) * 100
+              );
+
+              return (
+                <div
+                  key={listing.id}
+                  id={`produce-card-${listing.id}`}
+                  className="bg-white rounded-2xl border border-stone-200 shadow-xs hover:border-[#1B4332] transition-all p-5 flex flex-col justify-between space-y-4 group"
+                >
+                  {/* Top metadata */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono font-bold uppercase bg-stone-100 text-stone-700 px-2 py-0.5 rounded">
+                        {listing.grade}
+                      </span>
+                      <span className="text-xs font-bold text-emerald-800 flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>{listing.isFPO ? 'FPO Direct' : 'Verified Farmer'}</span>
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 className="text-lg font-black text-stone-900 group-hover:text-[#1B4332] transition-colors">
+                        {listing.cropName}
+                      </h3>
+                      <p className="text-xs text-stone-500">{listing.variety}</p>
+                    </div>
+
+                    {/* Location & Farmer info */}
+                    <div className="text-xs text-stone-600 space-y-1 pt-1 border-t border-stone-100">
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+                        <span className="font-medium truncate">
+                          {listing.location.village}, {listing.location.district} ({listing.location.state})
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-stone-500">
+                        <span>Farmer: <strong>{listing.farmerName}</strong></span>
+                        <span>Harvest: <strong>{listing.harvestDate}</strong></span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quantity and Availability */}
+                  <div className="grid grid-cols-2 gap-2 bg-stone-50 p-2.5 rounded-xl text-xs">
+                    <div>
+                      <span className="text-stone-400 block text-[10px] uppercase font-bold">Available Stock</span>
+                      <span className="font-extrabold text-stone-800">
+                        {listing.quantityAvailableQuintals} Quintals
+                      </span>
+                      <span className="text-[10px] text-stone-500 block">({listing.quantityAvailableQuintals * 100} kg)</span>
+                    </div>
+                    <div>
+                      <span className="text-stone-400 block text-[10px] uppercase font-bold">Min Order</span>
+                      <span className="font-bold text-stone-700">
+                        {listing.minOrderQuintals} Qtl ({listing.minOrderQuintals * 100} kg)
+                      </span>
+                      <span className="text-[10px] text-emerald-700 font-semibold block">Scheduled Delivery</span>
+                    </div>
+                  </div>
+
+                  {/* PRICE COMPARISON ELEMENT (Requirement 7) */}
+                  <div className="p-3 rounded-xl bg-amber-50/60 border border-amber-200/80 space-y-2 text-xs">
+                    <div className="flex items-center justify-between font-mono font-bold text-[10px] uppercase text-amber-900 border-b border-amber-200 pb-1">
+                      <span>Price Comparison (Direct vs Middleman)</span>
+                      <span className="text-emerald-800 font-bold">-{consumerSavingsPercent}% Less</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-stone-500 block text-[11px]">Traditional Retail Price</span>
+                        <span className="font-extrabold text-rose-800 text-sm line-through">
+                          ₹{retailTraditionalKg.toFixed(1)}/kg
+                        </span>
+                        <span className="text-[10px] text-stone-400 block">(₹{listing.retailConsumerPricePerQuintal}/Qtl)</span>
+                      </div>
+
+                      <div className="text-right">
+                        <span className="text-emerald-800 font-bold block text-[11px]">KisanDirect Price</span>
+                        <span className="font-black text-[#1B4332] text-base">
+                          ₹{platformPriceKg.toFixed(1)}/kg
+                        </span>
+                        <span className="text-[10px] text-emerald-700 font-bold block">(₹{listing.askingPricePerQuintal}/Qtl)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Direct Order Button */}
+                  <button
+                    id={`order-btn-${listing.id}`}
+                    onClick={() => setSelectedListingForCheckout(listing)}
+                    className="w-full py-2.5 px-4 bg-[#1B4332] hover:bg-[#143326] text-[#D4A24E] font-extrabold rounded-xl text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
+                  >
+                    <ShoppingBag className="w-4 h-4" />
+                    <span>Place Order (Standard / Bulk)</span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Direct Checkout Modal */}
+      {selectedListingForCheckout && (
+        <CheckoutModal
+          listing={selectedListingForCheckout}
+          onClose={() => setSelectedListingForCheckout(null)}
+          onConfirmOrder={(order) => {
+            onPlaceOrder(order);
+            setSelectedListingForCheckout(null);
+          }}
+        />
+      )}
+    </div>
+  );
+};

@@ -1,229 +1,174 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState, useEffect } from 'react';
-import { Language, ScanResult, CropCategory, DiseaseInfo } from './types';
-import { INITIAL_SAMPLE_SCANS } from './data/sampleScans';
-import { CROP_DISEASES } from './data/cropDiseases';
-import { Header } from './components/Header';
-import { Footer } from './components/Footer';
+import { ProduceListing, MarketplaceOrder } from './types';
+import { INITIAL_PRODUCE_LISTINGS, INITIAL_MARKETPLACE_ORDERS } from './data/marketplaceData';
+import { Header, ActiveTab } from './components/Header';
 import { LandingPage } from './components/LandingPage';
-import { ScanPage } from './components/ScanPage';
-import { ResultsPage } from './components/ResultsPage';
-import { Dashboard } from './components/Dashboard';
-import { SupabaseModal } from './components/SupabaseModal';
-import { AuthModal } from './components/AuthModal';
-import {
-  UserProfile,
-  getCurrentUser,
-  setCurrentUser,
-  DEMO_USER,
-} from './services/authService';
-import {
-  fetchScansFromSupabase,
-  saveScanToSupabase,
-  saveFarmerProfileToSupabase,
-  updateScanStatusInSupabase,
-} from './services/supabaseService';
+import { FarmerHub } from './components/FarmerHub';
+import { MarketplaceView } from './components/MarketplaceView';
+import { DemandForecastView } from './components/DemandForecastView';
+import { LogisticsOptimizerView } from './components/LogisticsOptimizerView';
+import { OrdersView } from './components/OrdersView';
+import { Footer } from './components/Footer';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'home' | 'scan' | 'results' | 'dashboard'>('home');
-  const [currentLang, setCurrentLang] = useState<Language>('en');
-  const [scansHistory, setScansHistory] = useState<ScanResult[]>(INITIAL_SAMPLE_SCANS);
-  const [currentScanResult, setCurrentScanResult] = useState<ScanResult>(INITIAL_SAMPLE_SCANS[0]);
-  const [preselectedCrop, setPreselectedCrop] = useState<CropCategory>('potato');
-  const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState<boolean>(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
-  const [user, setUser] = useState<UserProfile | null>(() => getCurrentUser() || DEMO_USER);
+  const [activeTab, setActiveTab] = useState<ActiveTab>('home');
 
-  // Load scans and sync farmer profile from/to Supabase on startup
-  const syncWithSupabase = async () => {
+  // Listings state (stored in localStorage for persistence with robust sanitization)
+  const [listings, setListings] = useState<ProduceListing[]>(() => {
     try {
-      if (user) {
-        saveFarmerProfileToSupabase(user).catch(() => {});
+      const saved = localStorage.getItem('kd_listings_v2');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((item: any, idx: number) => ({
+            id: item.id || `list-${Date.now()}-${idx}`,
+            farmerId: item.farmerId || 'farmer-01',
+            farmerName: item.farmerName || 'Verified Farmer',
+            farmerPhone: item.farmerPhone || '+91 98000 00000',
+            isFPO: Boolean(item.isFPO),
+            fpoName: item.fpoName,
+            cropId: item.cropId || 'onion',
+            cropName: item.cropName || 'Fresh Farm Produce',
+            variety: item.variety || 'Standard Grade',
+            grade: item.grade || 'Grade A (Premium)',
+            quantityAvailableQuintals: Number(item.quantityAvailableQuintals) || 10,
+            minOrderQuintals: Number(item.minOrderQuintals) || 1,
+            askingPricePerQuintal: Number(item.askingPricePerQuintal) || 2000,
+            mandiMiddlemanPricePerQuintal: Number(item.mandiMiddlemanPricePerQuintal) || 1300,
+            retailConsumerPricePerQuintal: Number(item.retailConsumerPricePerQuintal) || 3200,
+            harvestDate: item.harvestDate || new Date().toISOString().split('T')[0],
+            location: {
+              village: item.location?.village || 'Lasalgaon',
+              district: item.location?.district || 'Nashik',
+              state: item.location?.state || 'Maharashtra',
+              lat: item.location?.lat || 20.1448,
+              lng: item.location?.lng || 74.2255,
+            },
+            pickupPointName: item.pickupPointName || 'Designated Collection Center',
+            createdAt: item.createdAt || new Date().toISOString(),
+            status: item.status || 'active',
+          }));
+        }
       }
-      const cloudScans = await fetchScansFromSupabase();
-      if (cloudScans && cloudScans.length > 0) {
-        setScansHistory(cloudScans);
-        setCurrentScanResult(cloudScans[0]);
-      }
-    } catch (err) {
-      console.warn('Initial Supabase sync fallback:', err);
+    } catch {
+      // ignore parse error
     }
-  };
+    return INITIAL_PRODUCE_LISTINGS;
+  });
+
+  // Orders state
+  const [orders, setOrders] = useState<MarketplaceOrder[]>(() => {
+    try {
+      const saved = localStorage.getItem('kd_orders_v2');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+      }
+    } catch {
+      // ignore parse error
+    }
+    return INITIAL_MARKETPLACE_ORDERS;
+  });
 
   useEffect(() => {
-    syncWithSupabase();
-  }, []);
+    try {
+      localStorage.setItem('kd_listings_v2', JSON.stringify(listings));
+    } catch (e) {
+      console.warn('Failed to save listings to localStorage', e);
+    }
+  }, [listings]);
 
-  // Handle Login & Logout
-  const handleLoginSuccess = (newUser: UserProfile) => {
-    setUser(newUser);
-    setCurrentUser(newUser);
-    saveFarmerProfileToSupabase(newUser).catch(() => {});
+  useEffect(() => {
+    try {
+      localStorage.setItem('kd_orders_v2', JSON.stringify(orders));
+    } catch (e) {
+      console.warn('Failed to save orders to localStorage', e);
+    }
+  }, [orders]);
+
+  // Handler to add new produce from farmer hub
+  const handleAddListing = (newListing: ProduceListing) => {
+    setListings((prev) => [newListing, ...prev]);
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    setCurrentUser(null);
-  };
+  // Handler when a buyer places an order
+  const handlePlaceOrder = (newOrder: MarketplaceOrder) => {
+    setOrders((prev) => [newOrder, ...prev]);
 
-  // Navigate to scan tab
-  const handleNavigateToScan = (crop: CropCategory = 'potato') => {
-    setPreselectedCrop(crop);
-    setActiveTab('scan');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Instant demo preset selection from landing page
-  const handleSelectSampleLeaf = (disease: DiseaseInfo) => {
-    const [minConf, maxConf] = disease.confidenceRange;
-    const randomConf = Number((minConf + Math.random() * (maxConf - minConf)).toFixed(1));
-
-    const newScan: ScanResult = {
-      id: `scan-${Date.now()}`,
-      timestamp: new Date().toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      }) + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      crop: disease.crop,
-      cropNameEn: disease.cropNameEn,
-      cropNameHi: disease.cropNameHi,
-      disease: disease,
-      confidence: randomConf,
-      imageUrl: disease.sampleImage,
-      severity: disease.severity,
-      farmAreaAcres: user ? user.farmSizeAcres : 1.5,
-      fieldLocation: user ? `${user.village || 'Plot 1'}, ${user.district}` : 'Plot 2 - Test Sector',
-      status: disease.severity === 'healthy' ? 'Healthy' : 'Critical',
-      notes: `Instant demo diagnosis via KrishiScan pathology engine.`,
-      userId: user?.id,
-      userPhone: user?.phone,
-      userName: user?.name,
-    };
-
-    setScansHistory((prev) => [newScan, ...prev]);
-    setCurrentScanResult(newScan);
-    saveScanToSupabase(newScan); // Asynchronously sync to Supabase
-    setActiveTab('results');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Complete scan handler
-  const handleScanComplete = (result: ScanResult) => {
-    const enrichedResult: ScanResult = {
-      ...result,
-      userId: user?.id,
-      userPhone: user?.phone,
-      userName: user?.name,
-      fieldLocation: user ? `${user.village || 'Plot 1'}, ${user.district}` : result.fieldLocation,
-    };
-    setScansHistory((prev) => [enrichedResult, ...prev]);
-    setCurrentScanResult(enrichedResult);
-    saveScanToSupabase(enrichedResult); // Asynchronously sync to Supabase
-    setActiveTab('results');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // View historical scan from dashboard
-  const handleViewScanResult = (scan: ScanResult) => {
-    setCurrentScanResult(scan);
-    setActiveTab('results');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Update status in history
-  const handleUpdateScanStatus = (
-    scanId: string,
-    status: 'Treated' | 'Follow-up' | 'Critical' | 'Healthy'
-  ) => {
-    setScansHistory((prev) =>
-      prev.map((s) => (s.id === scanId ? { ...s, status } : s))
+    // Update remaining quantity in listing
+    setListings((prev) =>
+      prev.map((item) => {
+        if (item.id === newOrder.listingId) {
+          const remaining = Math.max(0, item.quantityAvailableQuintals - newOrder.quantityQuintals);
+          return {
+            ...item,
+            quantityAvailableQuintals: remaining,
+            status: remaining <= 0 ? 'sold_out' : item.status,
+          };
+        }
+        return item;
+      })
     );
-    updateScanStatusInSupabase(scanId, status); // Asynchronously update in Supabase
+
+    // Switch to Orders view so buyer sees real-time logistics steps & price certificate
+    setActiveTab('orders');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF7F0] text-[#2B2B2B] font-sans selection:bg-[#D4A24E] selection:text-[#081C15]">
-      {/* Universal Top Navigation */}
+    <div className="min-h-screen bg-[#FDFBF7] text-stone-900 flex flex-col font-sans selection:bg-[#D4A24E] selection:text-[#1B4332]">
+      {/* Top Navigation */}
       <Header
-        currentLang={currentLang}
-        onLanguageChange={setCurrentLang}
-        activeTab={activeTab === 'results' ? 'scan' : activeTab}
-        setActiveTab={(tab) => {
+        activeTab={activeTab}
+        onSelectTab={(tab) => {
           setActiveTab(tab);
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
-        onStartScan={() => handleNavigateToScan()}
-        onOpenSupabaseModal={() => setIsSupabaseModalOpen(true)}
-        currentUser={user}
-        onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        ordersCount={orders.length}
       />
 
-      {/* Main Dynamic Workspace */}
+      {/* Main View Router */}
       <main className="flex-1">
         {activeTab === 'home' && (
-          <LandingPage
-            currentLang={currentLang}
-            onNavigateToScan={handleNavigateToScan}
-            onSelectSampleLeaf={handleSelectSampleLeaf}
+          <LandingPage onSelectTab={(tab) => {
+            setActiveTab(tab);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }} />
+        )}
+
+        {activeTab === 'farmer' && (
+          <FarmerHub
+            listings={listings}
+            onAddListing={handleAddListing}
           />
         )}
 
-        {activeTab === 'scan' && (
-          <ScanPage
-            currentLang={currentLang}
-            onScanComplete={handleScanComplete}
-            preselectedCrop={preselectedCrop}
+        {activeTab === 'buyer' && (
+          <MarketplaceView
+            listings={listings}
+            onPlaceOrder={handlePlaceOrder}
           />
         )}
 
-        {activeTab === 'results' && currentScanResult && (
-          <ResultsPage
-            scan={currentScanResult}
-            currentLang={currentLang}
-            onReScan={() => handleNavigateToScan(currentScanResult.crop)}
-          />
+        {activeTab === 'forecast' && (
+          <DemandForecastView />
         )}
 
-        {activeTab === 'dashboard' && (
-          <Dashboard
-            scans={scansHistory}
-            currentLang={currentLang}
-            onViewScanResult={handleViewScanResult}
-            onUpdateScanStatus={handleUpdateScanStatus}
-            onOpenSupabaseModal={() => setIsSupabaseModalOpen(true)}
-            currentUser={user}
-            onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        {activeTab === 'logistics' && (
+          <LogisticsOptimizerView />
+        )}
+
+        {activeTab === 'orders' && (
+          <OrdersView
+            orders={orders}
           />
         )}
       </main>
 
-      {/* Farmer Authentication & Profile Modal */}
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        currentUser={user}
-        onLoginSuccess={handleLoginSuccess}
-        onLogout={handleLogout}
-        currentLang={currentLang}
-      />
-
-      {/* Supabase Connection & SQL Schema Modal */}
-      <SupabaseModal
-        isOpen={isSupabaseModalOpen}
-        onClose={() => setIsSupabaseModalOpen(false)}
-        onConfigUpdated={syncWithSupabase}
-        scans={scansHistory}
-        currentUser={user}
-      />
-
       {/* Footer */}
-      <Footer currentLang={currentLang} />
+      <Footer />
     </div>
   );
 }
-
