@@ -18,7 +18,7 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="bg-[#1B4332] text-white border-b border-[#2d5f49] sticky top-0 z-40 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
-          {/* Logo & Problem Statement identifier */}
+          {/* Logo & Platform identifier */}
           <div 
             onClick={() => onSelectTab('home')}
             className="flex items-center gap-3 cursor-pointer select-none"
@@ -30,7 +30,7 @@ export const Header: React.FC<HeaderProps> = ({
               <div className="flex items-center gap-2">
                 <span className="font-black text-lg tracking-tight text-white">KisanDirect</span>
                 <span className="text-[10px] font-mono font-semibold bg-[#24543f] text-[#D4A24E] px-2 py-0.5 rounded border border-[#D4A24E]/30">
-                  DoCA PS 26033
+                  Direct Exchange
                 </span>
               </div>
               <p className="text-[11px] text-emerald-200">

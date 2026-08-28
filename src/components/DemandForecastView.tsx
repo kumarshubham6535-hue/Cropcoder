@@ -30,7 +30,7 @@ export const DemandForecastView: React.FC = () => {
       <div className="bg-stone-50 p-5 sm:p-6 rounded-2xl border border-stone-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#1B4332] text-xs font-mono font-bold mb-1">
-            <span>Requirement #3 • Holt-Winters & Linear Regression</span>
+            <span>AI Predictive Intelligence • Holt-Winters & Time-Series Model</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-stone-900">
             AI Demand & Fair Farmgate Price Forecasting

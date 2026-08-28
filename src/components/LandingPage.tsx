@@ -10,43 +10,57 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectTab }) => {
   return (
     <div id="landing-page" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-10 text-stone-800">
       {/* Problem & Mandate Banner */}
-      <section className="bg-[#1B4332] text-white p-6 sm:p-10 rounded-2xl border border-[#2d5f49] shadow-md space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2d5f49] pb-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#24543f] text-[#D4A24E] text-xs font-mono font-bold border border-[#D4A24E]/30">
-            <span>Official Problem Statement: PS 26033</span>
-          </div>
-          <span className="text-xs text-emerald-200">
-            Ministry of Consumer Affairs, Food & Public Distribution (DoCA)
-          </span>
+      <section className="relative overflow-hidden bg-[#1B4332] text-white p-6 sm:p-10 rounded-2xl border border-[#2d5f49] shadow-lg space-y-6">
+        {/* Background Image Layer with thematic agricultural scenery */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <img
+            src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=2000&q=80"
+            alt="Lush agricultural farming field at golden sunrise"
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover object-center opacity-25 mix-blend-luminosity scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#112d22]/95 via-[#1B4332]/90 to-[#153a2b]/85" />
+          <div className="absolute inset-0 bg-radial-gradient from-transparent via-[#1B4332]/40 to-[#112d22]/80" />
         </div>
 
-        <div className="space-y-3">
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
-            Eliminating 4–5 Intermediary Tiers to Double Farmer Earnings and Lower Consumer Food Inflation
-          </h1>
-          <p className="text-emerald-100 text-sm sm:text-base max-w-4xl leading-relaxed">
-            In the traditional agricultural supply chain, produce passes through village aggregators, local commission agents (Arhtiyas), APMC mandi traders, secondary wholesalers, and urban retailers. Each layer extracts 15–30% margins, leaving farmers with only 28–35% of the consumer rupee while inflating end-consumer prices by up to 180%.
-          </p>
-        </div>
-
-        {/* Real Numbers Problem Baseline */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-          <div className="bg-[#153427] p-4 rounded-xl border border-[#26533f]">
-            <span className="text-xs text-stone-400 block uppercase font-mono">Traditional Farmgate Realization</span>
-            <span className="text-2xl font-black text-rose-400">28% – 35%</span>
-            <p className="text-xs text-stone-300 mt-1">Farmer receives ₹13.50/kg for produce that retails at ₹36.00/kg in cities.</p>
+        <div className="relative z-10 space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2d5f49]/80 pb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#24543f]/80 text-[#D4A24E] text-xs font-mono font-bold border border-[#D4A24E]/40 backdrop-blur-xs">
+              <span>National Farmgate Exchange</span>
+            </div>
+            <span className="text-xs text-emerald-200 font-medium">
+              Direct Farm-to-Consumer & Bulk Wholesale Network
+            </span>
           </div>
 
-          <div className="bg-[#153427] p-4 rounded-xl border border-[#26533f]">
-            <span className="text-xs text-stone-400 block uppercase font-mono">Middleman Markup Margin</span>
-            <span className="text-2xl font-black text-amber-400">110% – 180%</span>
-            <p className="text-xs text-stone-300 mt-1">Accumulated commission fees, mandi cess, sorting cuts, and uncoordinated freight.</p>
+          <div className="space-y-3">
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight drop-shadow-xs">
+              Eliminating 4–5 Intermediary Tiers to Double Farmer Earnings and Lower Consumer Food Inflation
+            </h1>
+            <p className="text-emerald-100/90 text-sm sm:text-base max-w-4xl leading-relaxed">
+              In the traditional agricultural supply chain, produce passes through village aggregators, local commission agents (Arhtiyas), APMC mandi traders, secondary wholesalers, and urban retailers. Each layer extracts 15–30% margins, leaving farmers with only 28–35% of the consumer rupee while inflating end-consumer prices by up to 180%.
+            </p>
           </div>
 
-          <div className="bg-[#153427] p-4 rounded-xl border border-[#26533f]">
-            <span className="text-xs text-stone-400 block uppercase font-mono">KisanDirect Outcome</span>
-            <span className="text-2xl font-black text-[#D4A24E]">+62% Farmer / -33% Buyer</span>
-            <p className="text-xs text-stone-300 mt-1">Farmer gets ₹22.00/kg, consumer pays ₹23.90/kg with consolidated ₹1.90/kg logistics.</p>
+          {/* Real Numbers Problem Baseline */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+            <div className="bg-[#153427]/85 backdrop-blur-xs p-4 rounded-xl border border-[#26533f]/80 shadow-xs">
+              <span className="text-xs text-emerald-300/80 block uppercase font-mono tracking-wider">Traditional Farmgate Realization</span>
+              <span className="text-2xl font-black text-rose-400">28% – 35%</span>
+              <p className="text-xs text-stone-300 mt-1">Farmer receives ₹13.50/kg for produce that retails at ₹36.00/kg in cities.</p>
+            </div>
+
+            <div className="bg-[#153427]/85 backdrop-blur-xs p-4 rounded-xl border border-[#26533f]/80 shadow-xs">
+              <span className="text-xs text-emerald-300/80 block uppercase font-mono tracking-wider">Middleman Markup Margin</span>
+              <span className="text-2xl font-black text-amber-400">110% – 180%</span>
+              <p className="text-xs text-stone-300 mt-1">Accumulated commission fees, mandi cess, sorting cuts, and uncoordinated freight.</p>
+            </div>
+
+            <div className="bg-[#153427]/85 backdrop-blur-xs p-4 rounded-xl border border-[#26533f]/80 shadow-xs">
+              <span className="text-xs text-emerald-300/80 block uppercase font-mono tracking-wider">KisanDirect Outcome</span>
+              <span className="text-2xl font-black text-[#D4A24E]">+62% Farmer / -33% Buyer</span>
+              <p className="text-xs text-stone-300 mt-1">Farmer gets ₹22.00/kg, consumer pays ₹23.90/kg with consolidated ₹1.90/kg logistics.</p>
+            </div>
           </div>
         </div>
       </section>
@@ -146,17 +160,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectTab }) => {
       <section className="bg-stone-50 p-6 sm:p-8 rounded-2xl border border-stone-200 space-y-6">
         <div className="border-b border-stone-200 pb-3">
           <h2 className="text-xl font-black text-stone-900">
-            How the 4-Point Solution Solves Problem Statement 26033
+            Integrated Direct Farm-to-Market Ecosystem
           </h2>
           <p className="text-xs text-stone-500 mt-0.5">
-            Architectural mapping to Department of Consumer Affairs requirements
+            Four foundational pillars connecting farmers directly with buyers and AI-optimized logistics
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white p-4 rounded-xl border border-stone-200 space-y-2">
             <span className="text-[11px] font-mono font-bold text-[#1B4332] bg-emerald-50 px-2 py-0.5 rounded">
-              Requirement 1
+              Pillar 01
             </span>
             <h3 className="text-sm font-extrabold text-stone-900">Direct Digital Marketplace</h3>
             <p className="text-xs text-stone-600 leading-relaxed">
@@ -166,7 +180,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectTab }) => {
 
           <div className="bg-white p-4 rounded-xl border border-stone-200 space-y-2">
             <span className="text-[11px] font-mono font-bold text-[#1B4332] bg-emerald-50 px-2 py-0.5 rounded">
-              Requirement 2
+              Pillar 02
             </span>
             <h3 className="text-sm font-extrabold text-stone-900">Integrated Logistics Support</h3>
             <p className="text-xs text-stone-600 leading-relaxed">
@@ -176,7 +190,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectTab }) => {
 
           <div className="bg-white p-4 rounded-xl border border-stone-200 space-y-2">
             <span className="text-[11px] font-mono font-bold text-[#1B4332] bg-emerald-50 px-2 py-0.5 rounded">
-              Requirement 3
+              Pillar 03
             </span>
             <h3 className="text-sm font-extrabold text-stone-900">AI Demand & Price Forecast</h3>
             <p className="text-xs text-stone-600 leading-relaxed">
@@ -186,7 +200,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectTab }) => {
 
           <div className="bg-white p-4 rounded-xl border border-stone-200 space-y-2">
             <span className="text-[11px] font-mono font-bold text-[#1B4332] bg-emerald-50 px-2 py-0.5 rounded">
-              Requirement 4
+              Pillar 04
             </span>
             <h3 className="text-sm font-extrabold text-stone-900">AI Route Optimization</h3>
             <p className="text-xs text-stone-600 leading-relaxed">

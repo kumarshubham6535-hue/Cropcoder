@@ -1,5 +1,5 @@
-// Smart India Hackathon - Problem Statement 26033
-// Ministry of Consumer Affairs, Food & Public Distribution (DoCA)
+// KisanDirect - Direct Farm-to-Buyer Marketplace & Logistics
+// Agricultural Supply Chain & Direct Exchange Platform
 
 export type UserRole = 'farmer' | 'buyer';
 

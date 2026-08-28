@@ -137,7 +137,7 @@ export const LogisticsOptimizerView: React.FC = () => {
           <div className="flex items-center justify-between border-b border-emerald-200 pb-3">
             <div>
               <span className="text-[10px] font-mono uppercase bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded font-bold">
-                AI TSP Solution (PS 26033)
+                AI TSP Routing Engine
               </span>
               <h3 className="text-base font-black text-[#1B4332] mt-1">
                 Optimized Multi-Farm Collection Run

@@ -12,7 +12,7 @@ export const Footer: React.FC = () => {
             </div>
             <span className="font-extrabold text-white text-sm">KisanDirect</span>
             <span className="text-[10px] font-mono bg-[#24543f] text-[#D4A24E] px-1.5 py-0.5 rounded border border-[#D4A24E]/30">
-              PS 26033
+              Verified Network
             </span>
           </div>
           <p className="text-[11px] text-stone-300 leading-relaxed">
@@ -22,7 +22,7 @@ export const Footer: React.FC = () => {
 
         <div>
           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#D4A24E] block mb-1.5">
-            Key Architecture Modules
+            Platform Capabilities
           </span>
           <ul className="space-y-1 text-[11px] text-stone-300">
             <li>• Direct Farmer & FPO Listing Engine</li>
@@ -34,10 +34,10 @@ export const Footer: React.FC = () => {
 
         <div>
           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#D4A24E] block mb-1.5">
-            Government Compliance & Standard
+            Quality & Fair Trade Standards
           </span>
           <p className="text-[11px] text-stone-300 leading-relaxed">
-            Ministry of Consumer Affairs, Food & Public Distribution (DoCA). Designed for Smart India Hackathon Problem Statement 26033.
+            Transparent farmgate price discovery, APMC benchmark parity, and zero-commission direct fulfillment across states.
           </p>
           <div className="mt-2 text-[10px] text-emerald-400 font-mono flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -47,7 +47,7 @@ export const Footer: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row items-center justify-between text-[10px] text-stone-400 font-mono gap-2">
-        <span>© 2026 KisanDirect • DoCA PS 26033 Implementation</span>
+        <span>© 2026 KisanDirect • Direct Agricultural Exchange & Logistics Network</span>
         <span>Zero Middleman Commissions • Transparent Agricultural Trade</span>
       </div>
     </footer>

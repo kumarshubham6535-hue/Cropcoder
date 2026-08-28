@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { ProduceListing, MarketplaceOrder } from '../types';
-import { Search, Filter, ShoppingBag, MapPin, Calendar, CheckCircle2, TrendingDown, ArrowRight, ShieldCheck } from 'lucide-react';
+import { INDIAN_STATES_AND_UT } from '../data/indianStates';
+import { REGIONAL_HISTORICAL_DATASETS } from '../data/forecastingData';
+import { Search, Filter, ShoppingBag, MapPin, Calendar, CheckCircle2, TrendingDown, ArrowRight, ShieldCheck, Sprout, Building2, Sparkles, RefreshCw } from 'lucide-react';
 import { CheckoutModal } from './CheckoutModal';
 
 interface MarketplaceViewProps {
@@ -43,13 +45,18 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
       if (!matchesSearch) return false;
 
       // Crop filter
-      if (selectedCropFilter !== 'all' && listing.cropId !== selectedCropFilter) {
-        return false;
+      if (selectedCropFilter !== 'all') {
+        const cropMatch = 
+          listing.cropId === selectedCropFilter ||
+          (listing.cropName && listing.cropName.toLowerCase().includes(selectedCropFilter.toLowerCase()));
+        if (!cropMatch) return false;
       }
 
       // State filter
-      if (selectedStateFilter !== 'all' && listing.location?.state !== selectedStateFilter) {
-        return false;
+      if (selectedStateFilter !== 'all') {
+        const stateMatch = 
+          (listing.location?.state || '').toLowerCase() === selectedStateFilter.toLowerCase();
+        if (!stateMatch) return false;
       }
 
       // Buyer mode filter (Bulk: available quantity >= 10 Quintals)
@@ -61,10 +68,75 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
     });
   }, [listings, searchQuery, selectedCropFilter, selectedStateFilter, buyerMode]);
 
-  // Unique states from current listings
-  const availableStates = Array.from(
-    new Set((listings || []).map((l) => l.location?.state).filter((s): s is string => Boolean(s)))
-  );
+  // Master catalog of all crops across India
+  const availableCrops = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; count: number }>();
+    
+    // First register all datasets
+    REGIONAL_HISTORICAL_DATASETS.forEach((d) => {
+      map.set(d.cropId, {
+        id: d.cropId,
+        name: d.cropNameEn,
+        count: 0
+      });
+    });
+
+    // Compute live counts from listings
+    (listings || []).forEach((l) => {
+      if (!l?.cropId) return;
+      const key = l.cropId;
+      const cleanName = l.cropName ? l.cropName.split('(')[0].trim() : l.cropId;
+      const existing = map.get(key);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        map.set(key, {
+          id: key,
+          name: cleanName,
+          count: 1,
+        });
+      }
+    });
+
+    return Array.from(map.values());
+  }, [listings]);
+
+  // Active crops vs All catalog crops
+  const activeCrops = useMemo(() => availableCrops.filter(c => c.count > 0), [availableCrops]);
+  const otherCrops = useMemo(() => availableCrops.filter(c => c.count === 0), [availableCrops]);
+
+  // Live active state counts
+  const stateCountsMap = useMemo(() => {
+    const map = new Map<string, number>();
+    (listings || []).forEach((l) => {
+      const stateName = l.location?.state?.trim();
+      if (!stateName) return;
+      map.set(stateName, (map.get(stateName) || 0) + 1);
+    });
+    return map;
+  }, [listings]);
+
+  // States with active listings
+  const activeStatesList = useMemo(() => {
+    return Array.from(stateCountsMap.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [stateCountsMap]);
+
+  // Selected State Details if any
+  const selectedStateObj = useMemo(() => {
+    if (selectedStateFilter === 'all') return null;
+    return INDIAN_STATES_AND_UT.find(s => s.nameEn.toLowerCase() === selectedStateFilter.toLowerCase()) || null;
+  }, [selectedStateFilter]);
+
+  const hasActiveFilters = searchQuery.trim() !== '' || selectedCropFilter !== 'all' || selectedStateFilter !== 'all' || buyerMode !== 'all';
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setSelectedCropFilter('all');
+    setSelectedStateFilter('all');
+    setBuyerMode('all');
+  };
 
   return (
     <div id="marketplace-view-container" className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 text-stone-800">
@@ -72,13 +144,13 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
       <div className="bg-stone-50 p-5 sm:p-6 rounded-2xl border border-stone-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#1B4332] text-xs font-bold font-mono mb-1">
-            <span>Direct Farmgate Sourcing (No Commission Agents)</span>
+            <span>Direct Farmgate Sourcing • All 28 States & 8 UTs Supported</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-stone-900">
             Buyer Marketplace — Consumer & Institutional Bulk Supply
           </h1>
           <p className="text-xs sm:text-sm text-stone-600">
-            All prices shown are direct farmgate quotes with integrated consolidated logistics support.
+            All prices shown are direct farmgate quotes with integrated consolidated logistics support across India.
           </p>
         </div>
 
@@ -92,7 +164,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                 : 'text-stone-600 hover:text-stone-900'
             }`}
           >
-            All Listings
+            All Listings ({listings.length})
           </button>
           <button
             onClick={() => setBuyerMode('individual')}
@@ -102,7 +174,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                 : 'text-stone-600 hover:text-stone-900'
             }`}
           >
-            Standard Orders (1–5 Qtl)
+            Standard (1–5 Qtl)
           </button>
           <button
             onClick={() => setBuyerMode('bulk')}
@@ -112,68 +184,183 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                 : 'text-stone-600 hover:text-stone-900'
             }`}
           >
-            Bulk Orders (≥10 Qtl)
+            Bulk (≥10 Qtl)
           </button>
         </div>
       </div>
 
-      {/* Search & Filter Controls */}
+      {/* Search & Filter Controls with Clean Structure & High Legibility */}
       <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-white p-4 rounded-xl border border-stone-200 shadow-xs">
-        <div className="sm:col-span-6 relative">
-          <Search className="w-4 h-4 text-stone-400 absolute left-3 top-3" />
-          <input
-            type="text"
-            id="marketplace-search-input"
-            placeholder="Search by crop, district (e.g. Nashik, Agra), or state..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-stone-50 border border-stone-300 rounded-lg text-xs sm:text-sm font-medium focus:ring-2 focus:ring-[#1B4332] focus:outline-hidden"
-          />
+        <div className="sm:col-span-5 flex flex-col justify-center">
+          <label className="text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+            <Search className="w-3.5 h-3.5 text-stone-400" />
+            <span>Search Produce / Location</span>
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              id="marketplace-search-input"
+              placeholder="Search by crop, variety, district (e.g. Nashik, Agra), or state..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-3 pr-4 py-2 bg-stone-50 border border-stone-300 rounded-lg text-xs sm:text-sm font-medium focus:ring-2 focus:ring-[#1B4332] focus:bg-white focus:outline-hidden transition-all"
+            />
+          </div>
         </div>
 
-        <div className="sm:col-span-3">
+        <div className="sm:col-span-3.5 flex flex-col justify-center">
+          <label htmlFor="marketplace-crop-filter" className="text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+            <Sprout className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Crop / Commodity</span>
+          </label>
           <select
+            id="marketplace-crop-filter"
             value={selectedCropFilter}
             onChange={(e) => setSelectedCropFilter(e.target.value)}
-            className="w-full py-2 px-3 bg-stone-50 border border-stone-300 rounded-lg text-xs font-bold text-stone-800 cursor-pointer"
+            className="w-full py-2 px-3 bg-stone-50 border border-stone-300 rounded-lg text-xs font-bold text-stone-800 cursor-pointer focus:ring-2 focus:ring-[#1B4332] focus:bg-white focus:outline-hidden transition-all"
           >
-            <option value="all">All Crops</option>
-            <option value="onion">Onion</option>
-            <option value="potato">Potato</option>
-            <option value="tomato">Tomato</option>
-            <option value="wheat">Wheat</option>
+            <option value="all">All Crops & Commodities ({listings.length} Lots Available)</option>
+            {activeCrops.length > 0 && (
+              <optgroup label="── Active Harvest Lots in Stock ──">
+                {activeCrops.map((c) => (
+                  <option key={`active-${c.id}`} value={c.id}>
+                    {c.name} ({c.count} active {c.count === 1 ? 'lot' : 'lots'})
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {otherCrops.length > 0 && (
+              <optgroup label="── All Regional State Commodities ──">
+                {otherCrops.map((c) => (
+                  <option key={`other-${c.id}`} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
         </div>
 
-        <div className="sm:col-span-3">
+        <div className="sm:col-span-3.5 flex flex-col justify-center">
+          <label htmlFor="marketplace-state-filter" className="text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+            <MapPin className="w-3.5 h-3.5 text-blue-600" />
+            <span>Indian State / UT</span>
+          </label>
           <select
+            id="marketplace-state-filter"
             value={selectedStateFilter}
             onChange={(e) => setSelectedStateFilter(e.target.value)}
-            className="w-full py-2 px-3 bg-stone-50 border border-stone-300 rounded-lg text-xs font-bold text-stone-800 cursor-pointer"
+            className="w-full py-2 px-3 bg-stone-50 border border-stone-300 rounded-lg text-xs font-bold text-stone-800 cursor-pointer focus:ring-2 focus:ring-[#1B4332] focus:bg-white focus:outline-hidden transition-all"
           >
-            <option value="all">All States</option>
-            {availableStates.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
+            <option value="all">All Indian States & UTs (All 36 Regions)</option>
+            {activeStatesList.length > 0 && (
+              <optgroup label="── States with Live Farmgate Stock ──">
+                {activeStatesList.map((s) => (
+                  <option key={`live-${s.name}`} value={s.name}>
+                    {s.name} ({s.count} {s.count === 1 ? 'lot' : 'lots'})
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            <optgroup label="── All 28 States & 8 Union Territories ──">
+              {INDIAN_STATES_AND_UT.map((s) => {
+                const count = stateCountsMap.get(s.nameEn) || 0;
+                return (
+                  <option key={`all-${s.code}`} value={s.nameEn}>
+                    {s.nameEn} ({s.nameHi}) {count > 0 ? `• ${count} lots` : ''}
+                  </option>
+                );
+              })}
+            </optgroup>
           </select>
         </div>
       </div>
+
+      {/* Filter Badges & Quick Reset bar if active */}
+      {hasActiveFilters && (
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-stone-500 font-medium">Active filters:</span>
+          {selectedCropFilter !== 'all' && (
+            <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-md font-bold">
+              Crop: {availableCrops.find(c => c.id === selectedCropFilter)?.name || selectedCropFilter}
+              <button onClick={() => setSelectedCropFilter('all')} className="hover:text-emerald-950 cursor-pointer ml-1">✕</button>
+            </span>
+          )}
+          {selectedStateFilter !== 'all' && (
+            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-800 border border-blue-200 px-2.5 py-1 rounded-md font-bold">
+              State: {selectedStateFilter} {selectedStateObj ? `(${selectedStateObj.nameHi})` : ''}
+              <button onClick={() => setSelectedStateFilter('all')} className="hover:text-blue-950 cursor-pointer ml-1">✕</button>
+            </span>
+          )}
+          {buyerMode !== 'all' && (
+            <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-200 px-2.5 py-1 rounded-md font-bold">
+              Mode: {buyerMode === 'bulk' ? 'Bulk (≥10 Qtl)' : 'Standard Orders'}
+              <button onClick={() => setBuyerMode('all')} className="hover:text-amber-950 cursor-pointer ml-1">✕</button>
+            </span>
+          )}
+          {searchQuery && (
+            <span className="inline-flex items-center gap-1 bg-stone-100 text-stone-700 border border-stone-300 px-2.5 py-1 rounded-md font-medium">
+              "{searchQuery}"
+              <button onClick={() => setSearchQuery('')} className="hover:text-stone-900 cursor-pointer ml-1">✕</button>
+            </span>
+          )}
+          <button
+            onClick={handleResetFilters}
+            className="text-xs font-bold text-red-600 hover:text-red-700 underline cursor-pointer ml-1.5 flex items-center gap-1"
+          >
+            <RefreshCw className="w-3 h-3" />
+            <span>Clear All</span>
+          </button>
+        </div>
+      )}
 
       {/* Produce Listings Grid with Embedded Price Comparison (Requirement 3 & 7) */}
       <div className="space-y-3">
         <div className="flex items-center justify-between text-xs text-stone-500 font-medium">
           <span>
             Showing <strong>{filteredListings.length}</strong> active farmgate produce listings
+            {selectedStateFilter !== 'all' ? ` in ${selectedStateFilter}` : ''}
           </span>
-          <span>Prices update dynamically with regional wholesale mandis</span>
+          <span className="hidden sm:inline">Transparent Direct-from-Farmer Pricing • Real-time APMC Mandi Comparison</span>
         </div>
 
         {filteredListings.length === 0 ? (
-          <div className="bg-stone-50 p-10 rounded-2xl border border-dashed border-stone-300 text-center space-y-2">
-            <p className="text-sm font-bold text-stone-600">No produce matching your criteria found.</p>
-            <p className="text-xs text-stone-400">Try clearing your search query or selecting 'All Crops'.</p>
+          <div className="bg-stone-50 p-8 rounded-2xl border border-dashed border-stone-300 text-center space-y-4">
+            <div className="w-12 h-12 rounded-full bg-emerald-100 text-[#1B4332] mx-auto flex items-center justify-center">
+              <MapPin className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-base font-black text-stone-800">
+                {selectedStateFilter !== 'all'
+                  ? `No active harvest lots listed for ${selectedStateFilter} (${selectedStateObj?.nameHi || selectedStateFilter}) yet.`
+                  : 'No produce matching your criteria found.'}
+              </p>
+              <p className="text-xs text-stone-500 max-w-lg mx-auto">
+                {selectedStateObj
+                  ? `Direct farmer aggregation is operational across all ${selectedStateObj.districts.length} districts in ${selectedStateObj.nameEn}. Farmers can register their harvest immediately with 0% middleman commission.`
+                  : 'Try selecting a different crop or resetting your search filters.'}
+              </p>
+            </div>
+
+            {selectedStateObj && (
+              <div className="p-3 bg-white rounded-xl border border-stone-200 max-w-xl mx-auto text-left text-xs space-y-1">
+                <span className="font-bold text-stone-700">Supported Districts in {selectedStateObj.nameEn}:</span>
+                <p className="text-stone-500 line-clamp-2">
+                  {selectedStateObj.districts.slice(0, 12).join(', ')}
+                  {selectedStateObj.districts.length > 12 ? `, and ${selectedStateObj.districts.length - 12} more` : ''}
+                </p>
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <button
+                onClick={handleResetFilters}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#1B4332] text-[#D4A24E] text-xs font-bold rounded-xl shadow-xs hover:bg-[#143427] cursor-pointer transition-colors"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Show All Available Indian Produce ({listings.length} Lots)</span>
+              </button>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

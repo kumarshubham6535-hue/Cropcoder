@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { ProduceListing, FarmerProfile } from '../types';
 import { generateCropForecast } from '../services/forecastingEngine';
-import { Sprout, Plus, Sparkles, TrendingUp, MapPin, CheckCircle2, DollarSign, Calendar, Package } from 'lucide-react';
+import { Sprout, Plus, Sparkles, TrendingUp, MapPin, CheckCircle2, DollarSign, Calendar, Package, Loader2, Check } from 'lucide-react';
 
 interface FarmerHubProps {
   listings: ProduceListing[];
@@ -12,25 +12,58 @@ const SUPPORTED_CROPS = [
   { id: 'onion', name: 'Nashik Red Onion', state: 'Maharashtra', district: 'Nashik' },
   { id: 'potato', name: 'Agra Kufri Pukhraj Potatoes', state: 'Uttar Pradesh', district: 'Agra' },
   { id: 'tomato', name: 'Kolar Hybrid Fresh Tomatoes', state: 'Karnataka', district: 'Kolar' },
-  { id: 'wheat', name: 'Sehore Sharbati Wheat', state: 'Madhya Pradesh', district: 'Sehore' }
+  { id: 'wheat', name: 'Sehore Sharbati Wheat', state: 'Madhya Pradesh', district: 'Sehore' },
+  { id: 'rice_basmati', name: 'Basmati Rice (1121 Raw Aromatic)', state: 'Punjab', district: 'Amritsar' },
+  { id: 'mustard', name: 'Mustard / Sarson (Pusa Bold)', state: 'Rajasthan', district: 'Bharatpur' },
+  { id: 'chili', name: 'Red Chili (Guntur Sannam S4)', state: 'Andhra Pradesh', district: 'Guntur' },
+  { id: 'apple', name: 'Apple (Shimla Royal Delicious)', state: 'Himachal Pradesh', district: 'Shimla' },
+  { id: 'turmeric', name: 'Turmeric / Haldi (Salem Double Polished)', state: 'Tamil Nadu', district: 'Salem' },
+  { id: 'cotton', name: 'Cotton / Kapas (Gujarat Shankar-6)', state: 'Gujarat', district: 'Rajkot' },
+  { id: 'maize', name: 'Yellow Maize / Corn (Purnia High Starch)', state: 'Bihar', district: 'Purnia' },
+  { id: 'soybean', name: 'Soybean / Soyabean (Indore Yellow Gold)', state: 'Madhya Pradesh', district: 'Indore' },
+  { id: 'cardamom', name: 'Cardamom / Elaichi (Idukki 8mm Bold)', state: 'Kerala', district: 'Idukki' },
+  { id: 'sona_masoori', name: 'Sona Masoori Rice (Nalgonda Medium Grain)', state: 'Telangana', district: 'Nalgonda' },
 ];
 
 export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) => {
-  // Farmer Registration state
-  const [profile, setProfile] = useState<FarmerProfile>({
-    id: 'f-101',
-    name: 'Rameshwar Patil',
-    phone: '+91 98224 51203',
-    isFPO: true,
-    fpoName: 'Godavari Sahyadri Farmer Producer Co.',
-    state: 'Maharashtra',
-    district: 'Nashik',
-    village: 'Lasalgaon',
-    primaryCrops: ['Onion', 'Tomato']
+  // Farmer Registration state with persistence
+  const [profile, setProfile] = useState<FarmerProfile>(() => {
+    try {
+      const saved = localStorage.getItem('kd_farmer_profile_v2');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch {
+      // ignore
+    }
+    return {
+      id: 'f-101',
+      name: 'Rameshwar Patil',
+      phone: '+91 98224 51203',
+      isFPO: true,
+      fpoName: 'Godavari Sahyadri Farmer Producer Co.',
+      state: 'Maharashtra',
+      district: 'Nashik',
+      village: 'Lasalgaon',
+      primaryCrops: ['Onion', 'Tomato']
+    };
   });
 
   const [isEditingProfile, setIsEditingProfile] = useState<boolean>(false);
   const [showListingModal, setShowListingModal] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submitProgressStep, setSubmitProgressStep] = useState<'idle' | 'validating' | 'syncing' | 'complete'>('idle');
+  const [justAddedId, setJustAddedId] = useState<string | null>(null);
+
+  // Save profile changes to localStorage
+  const handleSaveProfile = (updated: FarmerProfile) => {
+    setProfile(updated);
+    try {
+      localStorage.setItem('kd_farmer_profile_v2', JSON.stringify(updated));
+    } catch (e) {
+      console.warn('Failed to save profile', e);
+    }
+  };
 
   // Listing Form State
   const [cropId, setCropId] = useState<string>('onion');
@@ -51,6 +84,10 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
 
   const handleCreateListing = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setSubmitProgressStep('validating');
 
     const newListing: ProduceListing = {
       id: `list-${Date.now()}`,
@@ -81,8 +118,27 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
       status: 'active',
     };
 
-    onAddListing(newListing);
-    setShowListingModal(false);
+    // Multi-stage visual feedback
+    setTimeout(() => {
+      setSubmitProgressStep('syncing');
+    }, 400);
+
+    setTimeout(() => {
+      setSubmitProgressStep('complete');
+    }, 850);
+
+    setTimeout(() => {
+      onAddListing(newListing);
+      setJustAddedId(newListing.id);
+      setIsSubmitting(false);
+      setShowListingModal(false);
+      setSubmitProgressStep('idle');
+
+      // Clear highlight after 4 seconds
+      setTimeout(() => {
+        setJustAddedId(null);
+      }, 4000);
+    }, 1200);
   };
 
   // Farmer's own listings
@@ -152,7 +208,7 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
               <input
                 type="text"
                 value={profile.name}
-                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                onChange={(e) => handleSaveProfile({ ...profile, name: e.target.value })}
                 className="w-full p-2 bg-stone-50 border border-stone-300 rounded-lg font-medium"
               />
             </div>
@@ -161,7 +217,7 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
               <input
                 type="text"
                 value={profile.phone}
-                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                onChange={(e) => handleSaveProfile({ ...profile, phone: e.target.value })}
                 className="w-full p-2 bg-stone-50 border border-stone-300 rounded-lg font-medium"
               />
             </div>
@@ -170,7 +226,7 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
               <input
                 type="text"
                 value={profile.village}
-                onChange={(e) => setProfile({ ...profile, village: e.target.value })}
+                onChange={(e) => handleSaveProfile({ ...profile, village: e.target.value })}
                 className="w-full p-2 bg-stone-50 border border-stone-300 rounded-lg font-medium"
               />
             </div>
@@ -179,7 +235,7 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
               <input
                 type="text"
                 value={profile.district}
-                onChange={(e) => setProfile({ ...profile, district: e.target.value })}
+                onChange={(e) => handleSaveProfile({ ...profile, district: e.target.value })}
                 className="w-full p-2 bg-stone-50 border border-stone-300 rounded-lg font-medium"
               />
             </div>
@@ -188,7 +244,7 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
               <input
                 type="text"
                 value={profile.state}
-                onChange={(e) => setProfile({ ...profile, state: e.target.value })}
+                onChange={(e) => handleSaveProfile({ ...profile, state: e.target.value })}
                 className="w-full p-2 bg-stone-50 border border-stone-300 rounded-lg font-medium"
               />
             </div>
@@ -197,7 +253,7 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
                 <input
                   type="checkbox"
                   checked={profile.isFPO}
-                  onChange={(e) => setProfile({ ...profile, isFPO: e.target.checked })}
+                  onChange={(e) => handleSaveProfile({ ...profile, isFPO: e.target.checked })}
                   className="w-4 h-4 text-emerald-600 rounded"
                 />
                 <span>Registered Farmer Producer Org (FPO)</span>
@@ -310,17 +366,29 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
               const mandiTotal = listing.quantityAvailableQuintals * listing.mandiMiddlemanPricePerQuintal;
               const directTotal = listing.quantityAvailableQuintals * listing.askingPricePerQuintal;
               const extraGain = directTotal - mandiTotal;
+              const isNewlyAdded = listing.id === justAddedId;
 
               return (
                 <div 
                   key={listing.id}
-                  className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs space-y-3"
+                  className={`bg-white p-5 rounded-2xl border transition-all duration-500 space-y-3 ${
+                    isNewlyAdded 
+                      ? 'border-emerald-500 ring-2 ring-emerald-500/50 shadow-lg bg-emerald-50/20 scale-[1.01]' 
+                      : 'border-stone-200 shadow-xs hover:border-stone-300'
+                  }`}
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="text-[10px] font-mono uppercase bg-stone-100 text-stone-600 px-2 py-0.5 rounded font-bold">
-                        {listing.grade}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono uppercase bg-stone-100 text-stone-600 px-2 py-0.5 rounded font-bold">
+                          {listing.grade}
+                        </span>
+                        {isNewlyAdded && (
+                          <span className="text-[10px] font-mono font-bold bg-emerald-600 text-white px-2 py-0.5 rounded-full animate-pulse flex items-center gap-1">
+                            <Sparkles className="w-3 h-3" /> Just Published
+                          </span>
+                        )}
+                      </div>
                       <h3 className="text-lg font-bold text-stone-900 mt-1">
                         {listing.cropName}
                       </h3>
@@ -375,7 +443,14 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
       {/* Produce Listing Modal Form */}
       {showListingModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs overflow-y-auto animate-fade-in">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-stone-200 text-stone-800">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-stone-200 text-stone-800 relative overflow-hidden">
+            {/* Top Linear Animated Progress bar during submission */}
+            {isSubmitting && (
+              <div className="absolute top-0 left-0 right-0 h-1 bg-stone-100 overflow-hidden">
+                <div className="h-full bg-emerald-600 animate-pulse transition-all duration-300 w-full" />
+              </div>
+            )}
+
             <div className="flex items-center justify-between border-b pb-3">
               <div>
                 <h2 className="text-lg font-black text-[#1B4332]">
@@ -384,24 +459,52 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
                 <p className="text-xs text-stone-500">Zero commission • Direct buyer contract</p>
               </div>
               <button
-                onClick={() => setShowListingModal(false)}
-                className="p-1 rounded-lg hover:bg-stone-100 text-stone-400 text-sm font-bold cursor-pointer"
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => !isSubmitting && setShowListingModal(false)}
+                className="p-1 rounded-lg hover:bg-stone-100 text-stone-400 text-sm font-bold cursor-pointer disabled:opacity-40"
               >
                 ✕
               </button>
             </div>
 
+            {/* Submission Step Tracker Banner */}
+            {isSubmitting && (
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs space-y-1.5 animate-fade-in">
+                <div className="flex items-center justify-between font-bold text-emerald-900">
+                  <span className="flex items-center gap-1.5">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-700" />
+                    {submitProgressStep === 'validating' && 'Validating Produce Quality & APMC Index...'}
+                    {submitProgressStep === 'syncing' && 'Broadcasting to Wholesale Buyer Network...'}
+                    {submitProgressStep === 'complete' && 'Listing Published Successfully!'}
+                  </span>
+                  <span className="text-[10px] font-mono text-emerald-700">
+                    {submitProgressStep === 'validating' ? '30%' : submitProgressStep === 'syncing' ? '75%' : '100%'}
+                  </span>
+                </div>
+                <div className="w-full bg-emerald-200 h-1.5 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-emerald-700 transition-all duration-300 rounded-full"
+                    style={{
+                      width: submitProgressStep === 'validating' ? '35%' : submitProgressStep === 'syncing' ? '75%' : '100%'
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleCreateListing} className="space-y-4 text-xs">
               <div>
                 <label className="block font-bold text-stone-700 mb-1">Select Crop *</label>
                 <select
+                  disabled={isSubmitting}
                   value={cropId}
                   onChange={(e) => {
                     setCropId(e.target.value);
                     const fc = generateCropForecast(e.target.value, profile.district);
                     setAskingPrice(fc.suggestedFarmerPrice);
                   }}
-                  className="w-full p-2.5 bg-stone-50 border border-stone-300 rounded-xl font-bold text-stone-900"
+                  className="w-full p-2.5 bg-stone-50 border border-stone-300 rounded-xl font-bold text-stone-900 disabled:opacity-60"
                 >
                   {SUPPORTED_CROPS.map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
@@ -421,8 +524,9 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
                 </div>
                 <button
                   type="button"
+                  disabled={isSubmitting}
                   onClick={() => setAskingPrice(forecast.suggestedFarmerPrice)}
-                  className="px-2.5 py-1 bg-[#1B4332] text-[#D4A24E] font-bold rounded-lg text-[11px] cursor-pointer"
+                  className="px-2.5 py-1 bg-[#1B4332] text-[#D4A24E] font-bold rounded-lg text-[11px] cursor-pointer disabled:opacity-60"
                 >
                   Use AI Price
                 </button>
@@ -435,9 +539,10 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
                     type="number"
                     min={100}
                     step={50}
+                    disabled={isSubmitting}
                     value={askingPrice}
                     onChange={(e) => setAskingPrice(Number(e.target.value))}
-                    className="w-full p-2.5 bg-stone-50 border border-stone-300 rounded-xl font-bold"
+                    className="w-full p-2.5 bg-stone-50 border border-stone-300 rounded-xl font-bold disabled:opacity-60"
                     required
                   />
                   <span className="text-[10px] text-stone-400 block mt-0.5">
@@ -450,9 +555,10 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
                   <input
                     type="number"
                     min={1}
+                    disabled={isSubmitting}
                     value={quantity}
                     onChange={(e) => setQuantity(Number(e.target.value))}
-                    className="w-full p-2.5 bg-stone-50 border border-stone-300 rounded-xl font-bold"
+                    className="w-full p-2.5 bg-stone-50 border border-stone-300 rounded-xl font-bold disabled:opacity-60"
                     required
                   />
                   <span className="text-[10px] text-stone-400 block mt-0.5">
@@ -468,9 +574,10 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
                     type="number"
                     min={1}
                     max={quantity}
+                    disabled={isSubmitting}
                     value={minOrder}
                     onChange={(e) => setMinOrder(Number(e.target.value))}
-                    className="w-full p-2 bg-stone-50 border border-stone-300 rounded-xl font-medium"
+                    className="w-full p-2 bg-stone-50 border border-stone-300 rounded-xl font-medium disabled:opacity-60"
                     required
                   />
                 </div>
@@ -478,9 +585,10 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
                   <label className="block font-bold text-stone-700 mb-1">Harvest Date</label>
                   <input
                     type="date"
+                    disabled={isSubmitting}
                     value={harvestDate}
                     onChange={(e) => setHarvestDate(e.target.value)}
-                    className="w-full p-2 bg-stone-50 border border-stone-300 rounded-xl font-medium"
+                    className="w-full p-2 bg-stone-50 border border-stone-300 rounded-xl font-medium disabled:opacity-60"
                     required
                   />
                 </div>
@@ -490,10 +598,11 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
                 <label className="block font-bold text-stone-700 mb-1">Designated Pickup Location *</label>
                 <input
                   type="text"
+                  disabled={isSubmitting}
                   value={pickupPoint}
                   onChange={(e) => setPickupPoint(e.target.value)}
                   placeholder="e.g. Village Collection Center / Cold Depot"
-                  className="w-full p-2.5 bg-stone-50 border border-stone-300 rounded-xl font-medium"
+                  className="w-full p-2.5 bg-stone-50 border border-stone-300 rounded-xl font-medium disabled:opacity-60"
                   required
                 />
               </div>
@@ -501,17 +610,29 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
               <div className="flex items-center justify-end gap-2 pt-2 border-t">
                 <button
                   type="button"
+                  disabled={isSubmitting}
                   onClick={() => setShowListingModal(false)}
-                  className="px-4 py-2 border border-stone-300 rounded-xl text-stone-600 font-bold cursor-pointer"
+                  className="px-4 py-2 border border-stone-300 rounded-xl text-stone-600 font-bold cursor-pointer disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   id="publish-produce-btn"
-                  className="px-5 py-2 bg-[#1B4332] text-[#D4A24E] font-extrabold rounded-xl shadow-md cursor-pointer"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 bg-[#1B4332] text-[#D4A24E] font-extrabold rounded-xl shadow-md cursor-pointer disabled:opacity-80 flex items-center gap-2 transition-all"
                 >
-                  Publish Listing
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-[#D4A24E]" />
+                      <span>Publishing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 text-[#D4A24E]" />
+                      <span>Publish Listing</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>

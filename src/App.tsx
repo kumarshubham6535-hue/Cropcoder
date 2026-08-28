@@ -13,41 +13,47 @@ import { Footer } from './components/Footer';
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
 
-  // Listings state (stored in localStorage for persistence with robust sanitization)
+  // Listings state (stored in localStorage with automatic hydration of all state agricultural listings)
   const [listings, setListings] = useState<ProduceListing[]>(() => {
     try {
-      const saved = localStorage.getItem('kd_listings_v2');
+      const saved = localStorage.getItem('kd_listings_v5') || localStorage.getItem('kd_listings_v2') || localStorage.getItem('kd_listings');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map((item: any, idx: number) => ({
-            id: item.id || `list-${Date.now()}-${idx}`,
-            farmerId: item.farmerId || 'farmer-01',
-            farmerName: item.farmerName || 'Verified Farmer',
-            farmerPhone: item.farmerPhone || '+91 98000 00000',
-            isFPO: Boolean(item.isFPO),
-            fpoName: item.fpoName,
-            cropId: item.cropId || 'onion',
-            cropName: item.cropName || 'Fresh Farm Produce',
-            variety: item.variety || 'Standard Grade',
-            grade: item.grade || 'Grade A (Premium)',
-            quantityAvailableQuintals: Number(item.quantityAvailableQuintals) || 10,
-            minOrderQuintals: Number(item.minOrderQuintals) || 1,
-            askingPricePerQuintal: Number(item.askingPricePerQuintal) || 2000,
-            mandiMiddlemanPricePerQuintal: Number(item.mandiMiddlemanPricePerQuintal) || 1300,
-            retailConsumerPricePerQuintal: Number(item.retailConsumerPricePerQuintal) || 3200,
-            harvestDate: item.harvestDate || new Date().toISOString().split('T')[0],
-            location: {
-              village: item.location?.village || 'Lasalgaon',
-              district: item.location?.district || 'Nashik',
-              state: item.location?.state || 'Maharashtra',
-              lat: item.location?.lat || 20.1448,
-              lng: item.location?.lng || 74.2255,
-            },
-            pickupPointName: item.pickupPointName || 'Designated Collection Center',
-            createdAt: item.createdAt || new Date().toISOString(),
-            status: item.status || 'active',
-          }));
+          // Identify any custom listings created by user
+          const initialIds = new Set(INITIAL_PRODUCE_LISTINGS.map(l => l.id));
+          const customListings = parsed
+            .filter((p: any) => !initialIds.has(p.id))
+            .map((item: any, idx: number) => ({
+              id: item.id || `list-custom-${Date.now()}-${idx}`,
+              farmerId: item.farmerId || 'farmer-01',
+              farmerName: item.farmerName || 'Verified Farmer',
+              farmerPhone: item.farmerPhone || '+91 98000 00000',
+              isFPO: Boolean(item.isFPO),
+              fpoName: item.fpoName,
+              cropId: item.cropId || 'onion',
+              cropName: item.cropName || 'Fresh Farm Produce',
+              variety: item.variety || 'Standard Grade',
+              grade: item.grade || 'Grade A (Premium)',
+              quantityAvailableQuintals: Number(item.quantityAvailableQuintals) || 10,
+              minOrderQuintals: Number(item.minOrderQuintals) || 1,
+              askingPricePerQuintal: Number(item.askingPricePerQuintal) || 2000,
+              mandiMiddlemanPricePerQuintal: Number(item.mandiMiddlemanPricePerQuintal) || 1300,
+              retailConsumerPricePerQuintal: Number(item.retailConsumerPricePerQuintal) || 3200,
+              harvestDate: item.harvestDate || new Date().toISOString().split('T')[0],
+              location: {
+                village: item.location?.village || 'Lasalgaon',
+                district: item.location?.district || 'Nashik',
+                state: item.location?.state || 'Maharashtra',
+                lat: item.location?.lat || 20.1448,
+                lng: item.location?.lng || 74.2255,
+              },
+              pickupPointName: item.pickupPointName || 'Designated Collection Center',
+              createdAt: item.createdAt || new Date().toISOString(),
+              status: item.status || 'active',
+            }));
+
+          return [...INITIAL_PRODUCE_LISTINGS, ...customListings];
         }
       }
     } catch {
@@ -59,11 +65,13 @@ export default function App() {
   // Orders state
   const [orders, setOrders] = useState<MarketplaceOrder[]>(() => {
     try {
-      const saved = localStorage.getItem('kd_orders_v2');
+      const saved = localStorage.getItem('kd_orders_v5') || localStorage.getItem('kd_orders_v2');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const initialIds = new Set(INITIAL_MARKETPLACE_ORDERS.map(o => o.id));
+          const userOrders = parsed.filter((o: any) => !initialIds.has(o.id));
+          return [...INITIAL_MARKETPLACE_ORDERS, ...userOrders];
         }
       }
     } catch {
@@ -74,7 +82,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('kd_listings_v2', JSON.stringify(listings));
+      localStorage.setItem('kd_listings_v5', JSON.stringify(listings));
     } catch (e) {
       console.warn('Failed to save listings to localStorage', e);
     }
@@ -82,7 +90,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('kd_orders_v2', JSON.stringify(orders));
+      localStorage.setItem('kd_orders_v5', JSON.stringify(orders));
     } catch (e) {
       console.warn('Failed to save orders to localStorage', e);
     }

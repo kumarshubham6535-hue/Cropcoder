@@ -1,6 +1,6 @@
 {
   "name": "KisanDirect - Direct Farm-to-Buyer Marketplace & Logistics",
-  "description": "Smart India Hackathon PS 26033 DoCA: Direct digital marketplace cutting middlemen, with AI demand forecasting and route optimization.",
+  "description": "Direct digital agricultural marketplace cutting middlemen, with AI demand forecasting and route optimization.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
