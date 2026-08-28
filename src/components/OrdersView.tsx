@@ -62,16 +62,22 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, onCancelOrder, o
 
   const handleConfirmCancel = () => {
     if (!cancellingOrder) return;
-    if (onCancelOrder) {
-      onCancelOrder(cancellingOrder.id, selectedReason, customNote.trim() || undefined);
-    }
+    const orderId = cancellingOrder.id;
     const orderNum = cancellingOrder.orderNumber;
     const refundAmt = cancellingOrder.totalAmount.toLocaleString('en-IN');
+    const reasonToSave = selectedReason;
+    const noteToSave = customNote.trim() || undefined;
+
+    if (onCancelOrder) {
+      onCancelOrder(orderId, reasonToSave, noteToSave);
+    }
+    
     setCancellingOrder(null);
+    setFilter('all'); // Ensure the user immediately sees the cancelled order with refund details
     setActionSuccessMsg(`Delivery for Order ${orderNum} has been cancelled. 100% Refund of ₹${refundAmt} initiated to buyer account.`);
     setTimeout(() => {
       setActionSuccessMsg(null);
-    }, 6000);
+    }, 8000);
   };
 
   return (

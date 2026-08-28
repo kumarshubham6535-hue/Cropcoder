@@ -65,13 +65,11 @@ export default function App() {
   // Orders state
   const [orders, setOrders] = useState<MarketplaceOrder[]>(() => {
     try {
-      const saved = localStorage.getItem('kd_orders_v5') || localStorage.getItem('kd_orders_v2');
+      const saved = localStorage.getItem('kd_orders_v6') || localStorage.getItem('kd_orders_v5');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const initialIds = new Set(INITIAL_MARKETPLACE_ORDERS.map(o => o.id));
-          const userOrders = parsed.filter((o: any) => !initialIds.has(o.id));
-          return [...INITIAL_MARKETPLACE_ORDERS, ...userOrders];
+          return parsed;
         }
       }
     } catch {
@@ -90,7 +88,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('kd_orders_v5', JSON.stringify(orders));
+      localStorage.setItem('kd_orders_v6', JSON.stringify(orders));
     } catch (e) {
       console.warn('Failed to save orders to localStorage', e);
     }
@@ -127,17 +125,19 @@ export default function App() {
 
   // Handler when buyer/farmer cancels a delivery
   const handleCancelOrder = (orderId: string, reason: string, note?: string) => {
-    let cancelledOrder: MarketplaceOrder | undefined;
+    let targetListingId: string | undefined;
+    let targetQty: number = 0;
 
     setOrders((prev) =>
       prev.map((order) => {
         if (order.id === orderId) {
-          cancelledOrder = order;
+          targetListingId = order.listingId;
+          targetQty = order.quantityQuintals;
           return {
             ...order,
             status: 'cancelled' as const,
             cancelledAt: new Date().toISOString(),
-            cancellationReason: reason,
+            cancellationReason: reason || 'Customer requested delivery cancellation',
             cancellationNote: note,
             refundAmount: order.totalAmount,
             refundStatus: 'initiated' as const,
@@ -148,14 +148,12 @@ export default function App() {
       })
     );
 
-    // If order found, return the stock back to the active produce listing
-    if (cancelledOrder) {
-      const targetListingId = (cancelledOrder as MarketplaceOrder).listingId;
-      const targetQuantity = (cancelledOrder as MarketplaceOrder).quantityQuintals;
+    // Return stock back to the active produce listing
+    if (targetListingId) {
       setListings((prev) =>
         prev.map((item) => {
           if (item.id === targetListingId) {
-            const restoredQty = item.quantityAvailableQuintals + targetQuantity;
+            const restoredQty = item.quantityAvailableQuintals + targetQty;
             return {
               ...item,
               quantityAvailableQuintals: restoredQty,
