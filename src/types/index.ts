@@ -46,7 +46,7 @@ export interface ProduceListing {
   status: 'active' | 'sold_out';
 }
 
-export type OrderStatus = 'confirmed' | 'aggregated' | 'in_transit' | 'delivered';
+export type OrderStatus = 'confirmed' | 'aggregated' | 'in_transit' | 'delivered' | 'cancelled';
 
 export interface MarketplaceOrder {
   id: string;
@@ -80,6 +80,11 @@ export interface MarketplaceOrder {
   logisticsStep: string;
   isScheduledPickup: boolean;
   scheduledDate?: string;
+  cancelledAt?: string;
+  cancellationReason?: string;
+  cancellationNote?: string;
+  refundAmount?: number;
+  refundStatus?: 'initiated' | 'refunded' | 'credited';
 }
 
 // AI Demand & Pricing Forecasting Types

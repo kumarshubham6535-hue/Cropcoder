@@ -125,6 +125,54 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Handler when buyer/farmer cancels a delivery
+  const handleCancelOrder = (orderId: string, reason: string, note?: string) => {
+    let cancelledOrder: MarketplaceOrder | undefined;
+
+    setOrders((prev) =>
+      prev.map((order) => {
+        if (order.id === orderId) {
+          cancelledOrder = order;
+          return {
+            ...order,
+            status: 'cancelled' as const,
+            cancelledAt: new Date().toISOString(),
+            cancellationReason: reason,
+            cancellationNote: note,
+            refundAmount: order.totalAmount,
+            refundStatus: 'initiated' as const,
+            logisticsStep: `Delivery Cancelled • 100% Refund (₹${order.totalAmount.toLocaleString('en-IN')}) initiated • Produce returned to farmer inventory`,
+          };
+        }
+        return order;
+      })
+    );
+
+    // If order found, return the stock back to the active produce listing
+    if (cancelledOrder) {
+      const targetListingId = (cancelledOrder as MarketplaceOrder).listingId;
+      const targetQuantity = (cancelledOrder as MarketplaceOrder).quantityQuintals;
+      setListings((prev) =>
+        prev.map((item) => {
+          if (item.id === targetListingId) {
+            const restoredQty = item.quantityAvailableQuintals + targetQuantity;
+            return {
+              ...item,
+              quantityAvailableQuintals: restoredQty,
+              status: 'active',
+            };
+          }
+          return item;
+        })
+      );
+    }
+  };
+
+  // Handler to permanently delete/dismiss an order record
+  const handleDeleteOrder = (orderId: string) => {
+    setOrders((prev) => prev.filter((order) => order.id !== orderId));
+  };
+
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-stone-900 flex flex-col font-sans selection:bg-[#D4A24E] selection:text-[#1B4332]">
       {/* Top Navigation */}
@@ -134,7 +182,7 @@ export default function App() {
           setActiveTab(tab);
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
-        ordersCount={orders.length}
+        ordersCount={orders.filter(o => o.status !== 'cancelled').length}
       />
 
       {/* Main View Router */}
@@ -171,6 +219,8 @@ export default function App() {
         {activeTab === 'orders' && (
           <OrdersView
             orders={orders}
+            onCancelOrder={handleCancelOrder}
+            onDeleteOrder={handleDeleteOrder}
           />
         )}
       </main>

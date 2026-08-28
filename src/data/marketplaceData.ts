@@ -423,37 +423,5 @@ export const INITIAL_MARKETPLACE_ORDERS: MarketplaceOrder[] = [
     logisticsStep: 'Consolidated pickup complete • Transit to Sector 18 Noida Hub',
     isScheduledPickup: true,
     scheduledDate: '2026-08-27',
-  },
-  {
-    id: 'ord-902',
-    orderNumber: 'KD-2026-08-902',
-    listingId: 'list-101',
-    cropName: 'Nashik Red Onion',
-    farmerName: 'Rameshwar Patil (Godavari FPO)',
-    farmerPhone: '+91 98224 51203',
-    farmerPickupLocation: 'Godavari FPO Aggregation Point, Lasalgaon',
-    buyerName: 'Sunita Verma',
-    buyerPhone: '+91 99302 77102',
-    buyerType: 'individual',
-    deliveryAddress: {
-      addressLine: 'Flat 402, Green Meadows, Kothrud',
-      district: 'Pune',
-      state: 'Maharashtra',
-      pincode: '411038',
-    },
-    quantityQuintals: 1, // 1 Quintal (100 kg)
-    pricePerQuintal: 2200,
-    produceTotal: 2200,
-    logisticsFee: 190,
-    totalAmount: 2390,
-    traditionalChainCost: 3600,
-    consumerSavings: 1210, // 3600 - 2390
-    farmerEarnings: 2200,
-    farmerGainVsMandi: 850, // 2200 - 1350
-    status: 'delivered',
-    createdAt: '2026-08-24T09:10:00Z',
-    estimatedDeliveryDays: 1,
-    logisticsStep: 'Delivered at Doorstep • Payment Released to Farmer',
-    isScheduledPickup: false,
   }
 ];
