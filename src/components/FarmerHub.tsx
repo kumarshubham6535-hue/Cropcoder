@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { ProduceListing, FarmerProfile } from '../types';
 import { generateCropForecast } from '../services/forecastingEngine';
+import { getCoordinatesForLocation } from '../data/districtCoordinates';
 import { Sprout, Plus, Sparkles, TrendingUp, MapPin, CheckCircle2, DollarSign, Calendar, Package, Loader2, Check } from 'lucide-react';
 
 interface FarmerHubProps {
@@ -89,6 +90,8 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
     setIsSubmitting(true);
     setSubmitProgressStep('validating');
 
+    const coords = getCoordinatesForLocation(profile.district, profile.state);
+
     const newListing: ProduceListing = {
       id: `list-${Date.now()}`,
       farmerId: profile.id,
@@ -110,8 +113,8 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
         village: profile.village,
         district: profile.district,
         state: profile.state,
-        lat: 20.1448,
-        lng: 74.2255,
+        lat: coords.lat,
+        lng: coords.lng,
       },
       pickupPointName: pickupPoint.trim() || `${profile.village} Aggregation Hub`,
       createdAt: new Date().toISOString(),

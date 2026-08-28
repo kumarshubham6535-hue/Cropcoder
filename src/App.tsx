@@ -166,6 +166,30 @@ export default function App() {
     }
   };
 
+  // Handler to advance order status lifecycle (confirmed -> aggregated -> in_transit -> delivered)
+  const handleUpdateStatus = (orderId: string, newStatus: MarketplaceOrder['status']) => {
+    setOrders((prev) =>
+      prev.map((order) => {
+        if (order.id === orderId) {
+          let stepDescription = order.logisticsStep;
+          if (newStatus === 'aggregated') {
+            stepDescription = `Produce aggregated & inspected at ${order.farmerPickupLocation || 'Collection Center'} • Barcode batch assigned`;
+          } else if (newStatus === 'in_transit') {
+            stepDescription = `Dispatched via multi-farm TSP cold-chain vehicle • En route to ${order.deliveryAddress?.district || 'Buyer Destination'}`;
+          } else if (newStatus === 'delivered') {
+            stepDescription = `Successfully delivered to ${order.buyerName} • Direct farmer payout (₹${order.produceTotal.toLocaleString('en-IN')}) settled`;
+          }
+          return {
+            ...order,
+            status: newStatus,
+            logisticsStep: stepDescription,
+          };
+        }
+        return order;
+      })
+    );
+  };
+
   // Handler to permanently delete/dismiss an order record
   const handleDeleteOrder = (orderId: string) => {
     setOrders((prev) => prev.filter((order) => order.id !== orderId));
@@ -211,7 +235,10 @@ export default function App() {
         )}
 
         {activeTab === 'logistics' && (
-          <LogisticsOptimizerView />
+          <LogisticsOptimizerView
+            listings={listings}
+            orders={orders}
+          />
         )}
 
         {activeTab === 'orders' && (
@@ -219,6 +246,7 @@ export default function App() {
             orders={orders}
             onCancelOrder={handleCancelOrder}
             onDeleteOrder={handleDeleteOrder}
+            onUpdateStatus={handleUpdateStatus}
           />
         )}
       </main>

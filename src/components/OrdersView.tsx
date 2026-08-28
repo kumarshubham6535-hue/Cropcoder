@@ -36,7 +36,7 @@ const CANCELLATION_REASONS = [
   'Other commercial / personal reason'
 ];
 
-export const OrdersView: React.FC<OrdersViewProps> = ({ orders, onCancelOrder, onDeleteOrder }) => {
+export const OrdersView: React.FC<OrdersViewProps> = ({ orders, onCancelOrder, onDeleteOrder, onUpdateStatus }) => {
   const [filter, setFilter] = useState<OrderFilter>('all');
   const [cancellingOrder, setCancellingOrder] = useState<MarketplaceOrder | null>(null);
   const [selectedReason, setSelectedReason] = useState<string>(CANCELLATION_REASONS[0]);
@@ -358,6 +358,108 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, onCancelOrder, o
                       </div>
                     )}
                   </div>
+
+                  {/* Order Lifecycle Progress Tracker */}
+                  {!isCancelled && (
+                    <div className="p-4 bg-white rounded-xl border border-stone-200 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-stone-700 uppercase tracking-wider">
+                          Logistics & Delivery Lifecycle
+                        </span>
+                        {order.logisticsStep && (
+                          <span className="text-[10px] text-stone-500 font-medium">
+                            {order.logisticsStep}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* 4-Stage Visual Stepper */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                        {[
+                          { key: 'confirmed', label: '1. Confirmed', desc: 'Direct contract locked' },
+                          { key: 'aggregated', label: '2. Aggregated', desc: 'Collected at local hub' },
+                          { key: 'in_transit', label: '3. In Transit', desc: 'Cold-chain dispatch' },
+                          { key: 'delivered', label: '4. Delivered', desc: 'Payment released' }
+                        ].map((stage, sIdx) => {
+                          const stages = ['confirmed', 'aggregated', 'in_transit', 'delivered'];
+                          const currentStageIdx = stages.indexOf(order.status);
+                          const isComplete = currentStageIdx >= sIdx;
+                          const isCurrent = order.status === stage.key;
+
+                          return (
+                            <div
+                              key={stage.key}
+                              className={`p-2.5 rounded-xl border text-center transition-all ${
+                                isCurrent
+                                  ? 'bg-[#1B4332] text-white border-[#1B4332] shadow-xs'
+                                  : isComplete
+                                  ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
+                                  : 'bg-stone-50 text-stone-400 border-stone-200'
+                              }`}
+                            >
+                              <div className="flex items-center justify-center gap-1 font-bold text-xs">
+                                {isComplete && !isCurrent ? (
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 inline" />
+                                ) : null}
+                                <span>{stage.label}</span>
+                              </div>
+                              <p className={`text-[10px] mt-0.5 ${isCurrent ? 'text-amber-200' : 'text-stone-500'}`}>
+                                {stage.desc}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Advance Stage Action Button */}
+                      {onUpdateStatus && order.status !== 'delivered' && (
+                        <div className="flex justify-end pt-1">
+                          {order.status === 'confirmed' && (
+                            <button
+                              id={`advance-status-btn-${order.id}`}
+                              onClick={() => {
+                                onUpdateStatus(order.id, 'aggregated');
+                                setActionSuccessMsg(`Order ${order.orderNumber} advanced: Aggregated at Hub.`);
+                                setTimeout(() => setActionSuccessMsg(null), 4000);
+                              }}
+                              className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5"
+                            >
+                              <Package className="w-3.5 h-3.5" />
+                              <span>Advance: Mark Aggregated at Hub →</span>
+                            </button>
+                          )}
+                          {order.status === 'aggregated' && (
+                            <button
+                              id={`advance-status-btn-${order.id}`}
+                              onClick={() => {
+                                onUpdateStatus(order.id, 'in_transit');
+                                setActionSuccessMsg(`Order ${order.orderNumber} advanced: Dispatched into Transit.`);
+                                setTimeout(() => setActionSuccessMsg(null), 4000);
+                              }}
+                              className="px-3.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5"
+                            >
+                              <Truck className="w-3.5 h-3.5 text-emerald-700" />
+                              <span>Advance: Dispatch into Transit →</span>
+                            </button>
+                          )}
+                          {order.status === 'in_transit' && (
+                            <button
+                              id={`advance-status-btn-${order.id}`}
+                              onClick={() => {
+                                onUpdateStatus(order.id, 'delivered');
+                                setActionSuccessMsg(`Order ${order.orderNumber} completed: Delivered & Settled.`);
+                                setTimeout(() => setActionSuccessMsg(null), 4000);
+                              }}
+                              className="px-3.5 py-1.5 bg-[#1B4332] hover:bg-[#143326] text-[#D4A24E] rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-xs"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Confirm Delivery & Release Farmer Payout ✓</span>
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Price Comparison Callout for this Order */}

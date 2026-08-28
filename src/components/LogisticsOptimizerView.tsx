@@ -1,17 +1,125 @@
 import React, { useState, useMemo } from 'react';
-import { LOGISTICS_CORRIDORS, optimizeLogisticsRoute } from '../services/logisticsEngine';
-import { Navigation, Truck, MapPin, TrendingDown, Clock, ArrowRight, ShieldCheck, CheckCircle2, RotateCcw } from 'lucide-react';
+import { ProduceListing, MarketplaceOrder, GeoPoint } from '../types';
+import { LOGISTICS_CORRIDORS, optimizeLogisticsRoute, optimizeCustomRoute } from '../services/logisticsEngine';
+import { getCoordinatesForLocation } from '../data/districtCoordinates';
+import { Navigation, Truck, MapPin, TrendingDown, Clock, ArrowRight, ShieldCheck, CheckCircle2, RotateCcw, Activity } from 'lucide-react';
 
-export const LogisticsOptimizerView: React.FC = () => {
+interface LogisticsOptimizerViewProps {
+  listings?: ProduceListing[];
+  orders?: MarketplaceOrder[];
+}
+
+export const LogisticsOptimizerView: React.FC<LogisticsOptimizerViewProps> = ({ listings = [], orders = [] }) => {
   const [selectedCorridorKey, setSelectedCorridorKey] = useState<string>('maharashtra_western');
   const [activeStep, setActiveStep] = useState<number>(0);
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
 
-  const routeResult = useMemo(() => {
-    return optimizeLogisticsRoute(selectedCorridorKey);
-  }, [selectedCorridorKey]);
+  // Derive dynamic live network from real active listings and orders
+  const liveNetworkData = useMemo(() => {
+    const activeListings = listings.filter((l) => l.status === 'active' && l.quantityAvailableQuintals > 0);
+    const activeOrders = orders.filter((o) => o.status !== 'cancelled');
 
-  const corridor = LOGISTICS_CORRIDORS[selectedCorridorKey] || LOGISTICS_CORRIDORS.maharashtra_western;
+    // Group listings by district as pickup points
+    const pickupMap = new Map<string, { name: string; district: string; lat: number; lng: number; cargo: number }>();
+    activeListings.forEach((listing, index) => {
+      const d = listing.location?.district || `District ${index + 1}`;
+      const existing = pickupMap.get(d);
+      const coords = listing.location?.lat && listing.location?.lng 
+        ? { lat: listing.location.lat, lng: listing.location.lng }
+        : getCoordinatesForLocation(d, listing.location?.state || 'Maharashtra');
+      
+      if (existing) {
+        existing.cargo += listing.quantityAvailableQuintals;
+      } else {
+        pickupMap.set(d, {
+          name: `${listing.pickupPointName || `${d} Farm Hub`} (${listing.cropName})`,
+          district: d,
+          lat: coords.lat,
+          lng: coords.lng,
+          cargo: listing.quantityAvailableQuintals
+        });
+      }
+    });
+
+    const livePickups: GeoPoint[] = Array.from(pickupMap.entries()).slice(0, 6).map(([district, data], idx) => ({
+      id: `live-p-${idx + 1}`,
+      label: `Farm Hub ${idx + 1}`,
+      name: data.name,
+      type: 'farm_pickup' as const,
+      lat: data.lat,
+      lng: data.lng,
+      district: data.district,
+      cargoQuintals: Math.max(10, data.cargo)
+    }));
+
+    // Group orders by delivery district as dropoff points
+    const dropoffMap = new Map<string, { name: string; district: string; lat: number; lng: number; cargo: number }>();
+    activeOrders.forEach((order, index) => {
+      const d = order.deliveryAddress?.district || `Metro Hub ${index + 1}`;
+      const existing = dropoffMap.get(d);
+      const coords = getCoordinatesForLocation(d, order.deliveryAddress?.state || 'Maharashtra');
+      if (existing) {
+        existing.cargo += order.quantityQuintals;
+      } else {
+        dropoffMap.set(d, {
+          name: `${order.buyerName} (${d} Delivery Point)`,
+          district: d,
+          lat: coords.lat,
+          lng: coords.lng,
+          cargo: order.quantityQuintals
+        });
+      }
+    });
+
+    // If no orders yet, establish central consumption distribution points
+    let liveDropoffs: GeoPoint[] = Array.from(dropoffMap.entries()).map(([district, data], idx) => ({
+      id: `live-d-${idx + 1}`,
+      label: `Drop ${idx + 1}`,
+      name: data.name,
+      type: 'consumer_drop' as const,
+      lat: data.lat,
+      lng: data.lng,
+      district: data.district,
+      cargoQuintals: Math.max(10, data.cargo)
+    }));
+
+    if (liveDropoffs.length === 0) {
+      liveDropoffs = [
+        { id: 'ld-1', label: 'Drop 1', name: 'Pune Regional Retail Terminal', type: 'consumer_drop', lat: 18.5204, lng: 73.8567, district: 'Pune', cargoQuintals: 65 },
+        { id: 'ld-2', label: 'Drop 2', name: 'Navi Mumbai Direct Consumer Depot', type: 'bulk_depot', lat: 19.0760, lng: 72.8777, district: 'Mumbai', cargoQuintals: 90 }
+      ];
+    }
+
+    const liveHub: GeoPoint = {
+      id: 'live-hub-central',
+      label: 'Hub',
+      name: 'KisanDirect Regional Consolidation & Sorting Hub',
+      type: 'aggregation_hub',
+      lat: livePickups[0]?.lat ? livePickups[0].lat - 0.5 : 19.1235,
+      lng: livePickups[0]?.lng ? livePickups[0].lng - 0.2 : 73.9781,
+      district: livePickups[0]?.district || 'Pune',
+      cargoQuintals: 0
+    };
+
+    return {
+      hub: liveHub,
+      pickups: livePickups.length > 0 ? livePickups : LOGISTICS_CORRIDORS.maharashtra_western.pickups,
+      dropoffs: liveDropoffs
+    };
+  }, [listings, orders]);
+
+  const isLiveNetwork = selectedCorridorKey === 'live_network';
+
+  const routeResult = useMemo(() => {
+    if (isLiveNetwork) {
+      return optimizeCustomRoute(liveNetworkData.hub, liveNetworkData.pickups, liveNetworkData.dropoffs, 'LIVE');
+    }
+    return optimizeLogisticsRoute(selectedCorridorKey);
+  }, [selectedCorridorKey, isLiveNetwork, liveNetworkData]);
+
+  const corridor = isLiveNetwork 
+    ? { name: 'Live Marketplace Network (Active Farmgate Lots & Dispatches)', state: 'Live System', pickups: liveNetworkData.pickups, dropoffs: liveNetworkData.dropoffs, hub: liveNetworkData.hub }
+    : (LOGISTICS_CORRIDORS[selectedCorridorKey] || LOGISTICS_CORRIDORS.maharashtra_western);
 
   // Run Route Simulation
   const handleSimulate = () => {
@@ -37,13 +145,13 @@ export const LogisticsOptimizerView: React.FC = () => {
       <div className="bg-stone-50 p-5 sm:p-6 rounded-2xl border border-stone-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#1B4332] text-xs font-mono font-bold mb-1">
-            <span>Requirement #4 • Nearest-Neighbor Traveling Salesperson Problem (TSP)</span>
+            <span>Nearest-Neighbor Traveling Salesperson Problem (TSP) Engine</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-stone-900">
             AI Multi-Farm Route Optimization Engine
           </h1>
           <p className="text-xs sm:text-sm text-stone-600">
-            Consolidates individual farm trips into an optimized collection run, eliminating empty return miles and lowering freight costs from ₹9.50/kg to ₹3.20/kg.
+            Consolidates individual farm trips into an optimized collection run, eliminating empty return miles and lowering freight costs from ₹3.20/kg (₹320/Qtl) down to ₹1.08/kg (₹108/Qtl) — saving over 65% in logistics overhead.
           </p>
         </div>
 
@@ -58,6 +166,7 @@ export const LogisticsOptimizerView: React.FC = () => {
             }}
             className="px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs font-bold text-stone-900 shadow-xs cursor-pointer focus:ring-2 focus:ring-[#1B4332]"
           >
+            <option value="live_network">⚡ Live Marketplace Network ({listings.length} Active Lots)</option>
             {Object.entries(LOGISTICS_CORRIDORS).map(([key, val]) => (
               <option key={key} value={key}>
                 {val.name}

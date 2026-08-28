@@ -18,6 +18,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
   const [selectedCropFilter, setSelectedCropFilter] = useState<string>('all');
   const [selectedStateFilter, setSelectedStateFilter] = useState<string>('all');
   const [buyerMode, setBuyerMode] = useState<'all' | 'bulk' | 'individual'>('all');
+  const [hideSoldOut, setHideSoldOut] = useState<boolean>(true);
 
   // Checkout modal state
   const [selectedListingForCheckout, setSelectedListingForCheckout] = useState<ProduceListing | null>(null);
@@ -26,6 +27,12 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
   const filteredListings = useMemo(() => {
     return (listings || []).filter((listing) => {
       if (!listing) return false;
+
+      const isSoldOut = listing.status === 'sold_out' || (listing.quantityAvailableQuintals || 0) <= 0;
+      if (hideSoldOut && isSoldOut) {
+        return false;
+      }
+
       // Search text match
       const query = (searchQuery || '').toLowerCase().trim();
       const cropName = (listing.cropName || '').toLowerCase();
@@ -59,14 +66,17 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
         if (!stateMatch) return false;
       }
 
-      // Buyer mode filter (Bulk: available quantity >= 10 Quintals)
+      // Buyer mode filter (Bulk: available quantity >= 10 Quintals, Standard: min order <= 5 Quintals)
       if (buyerMode === 'bulk' && (listing.quantityAvailableQuintals || 0) < 10) {
+        return false;
+      }
+      if (buyerMode === 'individual' && (listing.minOrderQuintals || 1) > 5) {
         return false;
       }
 
       return true;
     });
-  }, [listings, searchQuery, selectedCropFilter, selectedStateFilter, buyerMode]);
+  }, [listings, searchQuery, selectedCropFilter, selectedStateFilter, buyerMode, hideSoldOut]);
 
   // Master catalog of all crops across India
   const availableCrops = useMemo(() => {
@@ -274,6 +284,23 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
             </optgroup>
           </select>
         </div>
+
+        {/* Hide Sold Out / In-Stock toggle */}
+        <div className="sm:col-span-12 flex items-center justify-between pt-2 border-t border-stone-100 text-xs">
+          <label className="flex items-center gap-2 cursor-pointer font-bold text-stone-700 select-none">
+            <input
+              type="checkbox"
+              id="hide-sold-out-checkbox"
+              checked={hideSoldOut}
+              onChange={(e) => setHideSoldOut(e.target.checked)}
+              className="w-4 h-4 text-emerald-700 rounded border-stone-300 focus:ring-emerald-600 cursor-pointer"
+            />
+            <span>Hide Sold-Out Lots (Show In-Stock Farmgate Produce Only)</span>
+          </label>
+          <span className="text-stone-400 text-[11px]">
+            {listings.filter(l => l.status === 'sold_out' || l.quantityAvailableQuintals <= 0).length} lot(s) currently reserved / sold out
+          </span>
+        </div>
       </div>
 
       {/* Filter Badges & Quick Reset bar if active */}
@@ -365,6 +392,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredListings.map((listing) => {
+              const isSoldOut = listing.status === 'sold_out' || (listing.quantityAvailableQuintals || 0) <= 0;
               const platformPriceKg = listing.askingPricePerQuintal / 100;
               const mandiMiddlemanKg = listing.mandiMiddlemanPricePerQuintal / 100;
               const retailTraditionalKg = listing.retailConsumerPricePerQuintal / 100;
@@ -376,7 +404,11 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                 <div
                   key={listing.id}
                   id={`produce-card-${listing.id}`}
-                  className="bg-white rounded-2xl border border-stone-200 shadow-xs hover:border-[#1B4332] transition-all p-5 flex flex-col justify-between space-y-4 group"
+                  className={`rounded-2xl border transition-all p-5 flex flex-col justify-between space-y-4 group ${
+                    isSoldOut
+                      ? 'bg-stone-50/80 border-stone-300 opacity-75'
+                      : 'bg-white border-stone-200 shadow-xs hover:border-[#1B4332]'
+                  }`}
                 >
                   {/* Top metadata */}
                   <div className="space-y-2">
@@ -384,10 +416,16 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                       <span className="text-[10px] font-mono font-bold uppercase bg-stone-100 text-stone-700 px-2 py-0.5 rounded">
                         {listing.grade}
                       </span>
-                      <span className="text-xs font-bold text-emerald-800 flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>{listing.isFPO ? 'FPO Direct' : 'Verified Farmer'}</span>
-                      </span>
+                      {isSoldOut ? (
+                        <span className="text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                          <span>Sold Out / Reserved</span>
+                        </span>
+                      ) : (
+                        <span className="text-xs font-bold text-emerald-800 flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>{listing.isFPO ? 'FPO Direct' : 'Verified Farmer'}</span>
+                        </span>
+                      )}
                     </div>
 
                     <div>
@@ -416,10 +454,12 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                   <div className="grid grid-cols-2 gap-2 bg-stone-50 p-2.5 rounded-xl text-xs">
                     <div>
                       <span className="text-stone-400 block text-[10px] uppercase font-bold">Available Stock</span>
-                      <span className="font-extrabold text-stone-800">
-                        {listing.quantityAvailableQuintals} Quintals
+                      <span className={`font-extrabold ${isSoldOut ? 'text-rose-700' : 'text-stone-800'}`}>
+                        {isSoldOut ? '0 Quintals' : `${listing.quantityAvailableQuintals} Quintals`}
                       </span>
-                      <span className="text-[10px] text-stone-500 block">({listing.quantityAvailableQuintals * 100} kg)</span>
+                      <span className="text-[10px] text-stone-500 block">
+                        {isSoldOut ? '(Stock Exhausted)' : `(${listing.quantityAvailableQuintals * 100} kg)`}
+                      </span>
                     </div>
                     <div>
                       <span className="text-stone-400 block text-[10px] uppercase font-bold">Min Order</span>
@@ -459,11 +499,16 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                   {/* Direct Order Button */}
                   <button
                     id={`order-btn-${listing.id}`}
-                    onClick={() => setSelectedListingForCheckout(listing)}
-                    className="w-full py-2.5 px-4 bg-[#1B4332] hover:bg-[#143326] text-[#D4A24E] font-extrabold rounded-xl text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
+                    disabled={isSoldOut}
+                    onClick={() => !isSoldOut && setSelectedListingForCheckout(listing)}
+                    className={`w-full py-2.5 px-4 font-extrabold rounded-xl text-xs flex items-center justify-center gap-2 transition-colors ${
+                      isSoldOut
+                        ? 'bg-stone-200 text-stone-500 cursor-not-allowed border border-stone-300'
+                        : 'bg-[#1B4332] hover:bg-[#143326] text-[#D4A24E] cursor-pointer shadow-xs'
+                    }`}
                   >
                     <ShoppingBag className="w-4 h-4" />
-                    <span>Place Order (Standard / Bulk)</span>
+                    <span>{isSoldOut ? 'Sold Out (0 Qtl Available)' : 'Place Order (Standard / Bulk)'}</span>
                   </button>
                 </div>
               );

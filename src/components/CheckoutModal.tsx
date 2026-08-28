@@ -15,8 +15,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 }) => {
   const modalTitleId = useId();
 
+  const availableStock = Math.max(0, listing.quantityAvailableQuintals || 0);
+  const isSoldOut = listing.status === 'sold_out' || availableStock <= 0;
+  const initialQty = isSoldOut ? 0 : Math.max(1, Math.min(listing.minOrderQuintals || 1, availableStock));
+
   // Order configuration
-  const [quantity, setQuantity] = useState<number>(listing.minOrderQuintals);
+  const [quantity, setQuantity] = useState<number>(initialQty);
   const [buyerName, setBuyerName] = useState<string>('Aarav Sharma (FreshMart)');
   const [buyerPhone, setBuyerPhone] = useState<string>('+91 98110 44556');
   const [district, setDistrict] = useState<string>('Pune');
@@ -27,6 +31,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [scheduledDate, setScheduledDate] = useState<string>(
     new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0]
   );
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Financial Calculations
   const produceTotal = quantity * listing.askingPricePerQuintal;
@@ -45,6 +50,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   const handlePlaceOrder = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isSoldOut) {
+      setErrorMessage('This harvest lot is sold out.');
+      return;
+    }
+
+    if (quantity <= 0 || quantity > availableStock) {
+      setErrorMessage(`Please select a valid quantity between 1 and ${availableStock} Quintals.`);
+      return;
+    }
 
     const newOrder: MarketplaceOrder = {
       id: `ord-${Date.now()}`,
@@ -309,6 +324,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             </div>
           </div>
 
+          {errorMessage && (
+            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-bold">
+              {errorMessage}
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
@@ -321,10 +342,15 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             <button
               type="submit"
               id="confirm-order-btn"
-              className="px-6 py-2.5 bg-[#1B4332] hover:bg-[#143326] text-[#D4A24E] font-black rounded-xl shadow-md transition-colors cursor-pointer flex items-center gap-1.5"
+              disabled={isSoldOut}
+              className={`px-6 py-2.5 font-black rounded-xl shadow-md transition-colors flex items-center gap-1.5 ${
+                isSoldOut
+                  ? 'bg-stone-200 text-stone-500 cursor-not-allowed border border-stone-300'
+                  : 'bg-[#1B4332] hover:bg-[#143326] text-[#D4A24E] cursor-pointer'
+              }`}
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>Confirm & Place Order</span>
+              <span>{isSoldOut ? 'Sold Out' : 'Confirm & Place Order'}</span>
             </button>
           </div>
         </form>

@@ -11,16 +11,25 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectTab }) => {
     <div id="landing-page" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-10 text-stone-800">
       {/* Problem & Mandate Banner */}
       <section className="relative overflow-hidden bg-[#1B4332] text-white p-6 sm:p-10 rounded-2xl border border-[#2d5f49] shadow-lg space-y-6">
-        {/* Background Image Layer with thematic agricultural scenery */}
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          <img
-            src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=2000&q=80"
-            alt="Lush agricultural farming field at golden sunrise"
-            referrerPolicy="no-referrer"
-            className="w-full h-full object-cover object-center opacity-25 mix-blend-luminosity scale-105"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#112d22]/95 via-[#1B4332]/90 to-[#153a2b]/85" />
-          <div className="absolute inset-0 bg-radial-gradient from-transparent via-[#1B4332]/40 to-[#112d22]/80" />
+        {/* Resilient Thematic Background Pattern (Agricultural Contour & Sunrise Gradient) */}
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-20">
+          <svg className="w-full h-full object-cover" viewBox="0 0 1200 600" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="sunGlow" x1="50%" y1="0%" x2="50%" y2="100%">
+                <stop offset="0%" stopColor="#D4A24E" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#1B4332" stopOpacity="0" />
+              </linearGradient>
+              <linearGradient id="fieldWave" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#52B788" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#2D6A4F" stopOpacity="0.1" />
+              </linearGradient>
+            </defs>
+            <circle cx="950" cy="120" r="280" fill="url(#sunGlow)" />
+            <path d="M0 400 C 300 320, 600 480, 1200 350 L 1200 600 L 0 600 Z" fill="url(#fieldWave)" />
+            <path d="M0 460 C 400 390, 800 520, 1200 420 L 1200 600 L 0 600 Z" fill="#2D6A4F" fillOpacity="0.3" />
+            <path d="M0 520 C 350 480, 750 560, 1200 500 L 1200 600 L 0 600 Z" fill="#143326" fillOpacity="0.5" />
+          </svg>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#112d22]/90 via-[#1B4332]/80 to-[#153a2b]/70" />
         </div>
 
         <div className="relative z-10 space-y-6">
