@@ -1,16 +1,23 @@
 import React from 'react';
-import { Sprout, ShoppingCart, TrendingUp, Navigation, ArrowRight, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Sprout, ShoppingCart, TrendingUp, Navigation, ArrowRight, CheckCircle2, ShieldCheck, Activity } from 'lucide-react';
 import { ActiveTab } from './Header';
+import { ProduceListing } from '../types';
 
 interface LandingPageProps {
   onSelectTab: (tab: ActiveTab) => void;
+  listings?: ProduceListing[];
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onSelectTab }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onSelectTab, listings = [] }) => {
+  // Compute live real-data statistics
+  const distinctStates = new Set(listings.map((l) => l.location?.state).filter(Boolean));
+  const distinctStatesCount = distinctStates.size || 1;
+  const activeLotsCount = listings.filter((l) => l.status === 'active' && l.quantityAvailableQuintals > 0).length;
+
   return (
-    <div id="landing-page" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-10 text-stone-800">
-      {/* Problem & Mandate Banner */}
-      <section className="relative overflow-hidden bg-[#1B4332] text-white p-6 sm:p-10 rounded-2xl border border-[#2d5f49] shadow-lg space-y-6">
+    <div id="landing-page" className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8 text-stone-800">
+      {/* Redesigned Compact Hero Banner with Direct CTAs */}
+      <section className="relative overflow-hidden bg-[#1B4332] text-white p-5 sm:p-8 rounded-2xl border border-[#2d5f49] shadow-lg space-y-5">
         {/* Resilient Thematic Background Pattern (Agricultural Contour & Sunrise Gradient) */}
         <div className="absolute inset-0 z-0 pointer-events-none opacity-20">
           <svg className="w-full h-full object-cover" viewBox="0 0 1200 600" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
@@ -32,46 +39,106 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectTab }) => {
           <div className="absolute inset-0 bg-gradient-to-r from-[#112d22]/90 via-[#1B4332]/80 to-[#153a2b]/70" />
         </div>
 
-        <div className="relative z-10 space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2d5f49]/80 pb-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#24543f]/80 text-[#D4A24E] text-xs font-mono font-bold border border-[#D4A24E]/40 backdrop-blur-xs">
+        <div className="relative z-10 space-y-4">
+          {/* 1. Small Eyebrow Badge */}
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#2d5f49]/80 pb-3">
+            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-md bg-[#24543f]/80 text-[#D4A24E] text-xs font-mono font-bold border border-[#D4A24E]/40 backdrop-blur-xs">
               <span>National Farmgate Exchange</span>
             </div>
-            <span className="text-xs text-emerald-200 font-medium">
+            <span className="text-xs text-emerald-200/90 font-medium">
               Direct Farm-to-Consumer & Bulk Wholesale Network
             </span>
           </div>
 
-          <div className="space-y-3">
-            <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight drop-shadow-xs">
-              Eliminating 4–5 Intermediary Tiers to Double Farmer Earnings and Lower Consumer Food Inflation
+          {/* 2. Punchy Headline & 3. One-sentence Subhead */}
+          <div className="space-y-2">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-tight drop-shadow-xs">
+              Cut Out 4–5 Middlemen. Farmers Earn More. Buyers Pay Less.
             </h1>
-            <p className="text-emerald-100/90 text-sm sm:text-base max-w-4xl leading-relaxed">
-              In the traditional agricultural supply chain, produce passes through village aggregators, local commission agents (Arhtiyas), APMC mandi traders, secondary wholesalers, and urban retailers. Each layer extracts 15–30% margins, leaving farmers with only 28–35% of the consumer rupee while inflating end-consumer prices by up to 180%.
+            <p className="text-emerald-100/90 text-xs sm:text-sm max-w-3xl leading-relaxed">
+              KisanDirect connects farmers and FPOs straight to consumers and bulk buyers — with AI-backed pricing, demand forecasts, and optimized logistics. No mandi commissions, no markup chains.
             </p>
           </div>
 
-          {/* Real Numbers Problem Baseline */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-            <div className="bg-[#153427]/85 backdrop-blur-xs p-4 rounded-xl border border-[#26533f]/80 shadow-xs">
-              <span className="text-xs text-emerald-300/80 block uppercase font-mono tracking-wider">Traditional Farmgate Realization</span>
-              <span className="text-2xl font-black text-rose-400">28% – 35%</span>
-              <p className="text-xs text-stone-300 mt-1">Farmer receives ₹13.50/kg for produce that retails at ₹36.00/kg in cities.</p>
+          {/* 4. Action CTA Buttons Directly in Hero */}
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <button
+              id="hero-list-harvest-btn"
+              onClick={() => onSelectTab('farmer')}
+              className="px-5 py-2.5 bg-[#D4A24E] hover:bg-[#c2913e] text-[#1B4332] font-black rounded-xl text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer shadow-md hover:shadow-lg active:scale-98"
+            >
+              <Sprout className="w-4 h-4" />
+              <span>List Your Harvest</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+
+            <button
+              id="hero-browse-marketplace-btn"
+              onClick={() => onSelectTab('buyer')}
+              className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer border border-white/20 backdrop-blur-xs active:scale-98"
+            >
+              <ShoppingCart className="w-4 h-4 text-[#D4A24E]" />
+              <span>Browse the Marketplace</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* 5. Live Real-Data Line */}
+          <div className="flex items-center gap-2 text-xs text-emerald-200/90 font-medium pt-0.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <span>
+              {listings.length} active listings across {distinctStatesCount} {distinctStatesCount === 1 ? 'state' : 'states'} ({activeLotsCount} lots available for instant dispatch)
+            </span>
+          </div>
+
+          {/* 6. Three Compact Stat Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            <div className="bg-[#153427]/85 backdrop-blur-xs p-3 sm:p-3.5 rounded-xl border border-[#26533f]/80 shadow-xs">
+              <span className="text-[10px] sm:text-[11px] text-emerald-300/80 block uppercase font-mono tracking-wider">
+                Traditional Realization
+              </span>
+              <span className="text-xl sm:text-2xl font-black text-rose-400">28% – 35%</span>
+              <p className="text-[11px] sm:text-xs text-stone-300 mt-0.5">
+                Farmers receive ₹13.50/kg for produce retailing at ₹36.00/kg.
+              </p>
             </div>
 
-            <div className="bg-[#153427]/85 backdrop-blur-xs p-4 rounded-xl border border-[#26533f]/80 shadow-xs">
-              <span className="text-xs text-emerald-300/80 block uppercase font-mono tracking-wider">Middleman Markup Margin</span>
-              <span className="text-2xl font-black text-amber-400">110% – 180%</span>
-              <p className="text-xs text-stone-300 mt-1">Accumulated commission fees, mandi cess, sorting cuts, and uncoordinated freight.</p>
+            <div className="bg-[#153427]/85 backdrop-blur-xs p-3 sm:p-3.5 rounded-xl border border-[#26533f]/80 shadow-xs">
+              <span className="text-[10px] sm:text-[11px] text-emerald-300/80 block uppercase font-mono tracking-wider">
+                Middleman Markup
+              </span>
+              <span className="text-xl sm:text-2xl font-black text-amber-400">110% – 180%</span>
+              <p className="text-[11px] sm:text-xs text-stone-300 mt-0.5">
+                Extracted across 4–5 uncoordinated intermediary layers.
+              </p>
             </div>
 
-            <div className="bg-[#153427]/85 backdrop-blur-xs p-4 rounded-xl border border-[#26533f]/80 shadow-xs">
-              <span className="text-xs text-emerald-300/80 block uppercase font-mono tracking-wider">KisanDirect Outcome</span>
-              <span className="text-2xl font-black text-[#D4A24E]">+62% Farmer / -33% Buyer</span>
-              <p className="text-xs text-stone-300 mt-1">Farmer gets ₹22.00/kg, consumer pays ₹23.90/kg with consolidated ₹1.90/kg logistics.</p>
+            <div className="bg-[#153427]/85 backdrop-blur-xs p-3 sm:p-3.5 rounded-xl border border-[#26533f]/80 shadow-xs">
+              <span className="text-[10px] sm:text-[11px] text-emerald-300/80 block uppercase font-mono tracking-wider">
+                KisanDirect Outcome
+              </span>
+              <span className="text-xl sm:text-2xl font-black text-[#D4A24E]">+62% Farm / -33% Buyer</span>
+              <p className="text-[11px] sm:text-xs text-stone-300 mt-0.5">
+                Direct fair price with consolidated ₹1.90/kg freight.
+              </p>
             </div>
           </div>
         </div>
+      </section>
+
+      {/* Moved Problem Section (Specific Detail Preserved Below Hero) */}
+      <section className="bg-stone-50 p-5 sm:p-6 rounded-2xl border border-stone-200 space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-mono font-bold text-rose-800 bg-rose-100 px-2 py-0.5 rounded">
+            The Supply Chain Problem
+          </span>
+          <h2 className="text-xs sm:text-sm font-bold text-stone-900 uppercase tracking-wider font-mono">
+            Why Traditional Agricultural Distribution Fails Farmers & Buyers
+          </h2>
+        </div>
+        <p className="text-stone-700 text-xs sm:text-sm leading-relaxed">
+          In the traditional agricultural supply chain, produce passes through village aggregators, local commission agents (Arhtiyas), APMC mandi traders, secondary wholesalers, and urban retailers. Each layer extracts 15–30% margins, leaving farmers with only 28–35% of the consumer rupee while inflating end-consumer prices by up to 180%.
+        </p>
       </section>
 
       {/* Two Clear Entry Points */}

@@ -139,6 +139,17 @@ export const LogisticsOptimizerView: React.FC<LogisticsOptimizerViewProps> = ({ 
 
   const totalCargoQuintals = corridor.pickups.reduce((acc, p) => acc + p.cargoQuintals, 0);
 
+  // Dynamic calculations: benchmarked against industry solo-trip baseline (₹320/Qtl or ₹3.20/kg)
+  const naiveCostPerQtl = 320;
+  const costReductionPct = Math.max(
+    0,
+    Math.round(((naiveCostPerQtl - routeResult.logisticsCostPerQuintalInr) / naiveCostPerQtl) * 100)
+  );
+  const distanceSavedPct = routeResult.unoptimizedDistanceKm > 0
+    ? Math.round((routeResult.distanceSavedKm / routeResult.unoptimizedDistanceKm) * 100)
+    : 0;
+  const optimizedCostPerKg = (routeResult.logisticsCostPerQuintalInr / 100).toFixed(2);
+
   return (
     <div id="logistics-optimizer-container" className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 text-stone-800">
       {/* Top Banner */}
@@ -151,7 +162,7 @@ export const LogisticsOptimizerView: React.FC<LogisticsOptimizerViewProps> = ({ 
             AI Multi-Farm Route Optimization Engine
           </h1>
           <p className="text-xs sm:text-sm text-stone-600">
-            Consolidates individual farm trips into an optimized collection run, eliminating empty return miles and lowering freight costs from ₹3.20/kg (₹320/Qtl) down to ₹1.08/kg (₹108/Qtl) — saving over 65% in logistics overhead.
+            Consolidates individual farm trips into an optimized collection run, eliminating empty return miles and lowering freight costs from the ₹3.20/kg (₹320/Qtl) solo baseline down to ₹{optimizedCostPerKg}/kg (₹{routeResult.logisticsCostPerQuintalInr}/Qtl) — a {costReductionPct}% reduction in logistics overhead.
           </p>
         </div>
 
@@ -285,7 +296,7 @@ export const LogisticsOptimizerView: React.FC<LogisticsOptimizerViewProps> = ({ 
               <span className="text-xl font-black text-[#1B4332]">
                 ₹{routeResult.logisticsCostPerQuintalInr} / Qtl
               </span>
-              <span className="text-[10px] text-emerald-700 font-bold block">-66% Logistics Cost</span>
+              <span className="text-[10px] text-emerald-700 font-bold block">-{costReductionPct}% Logistics Cost</span>
             </div>
           </div>
 
@@ -332,7 +343,7 @@ export const LogisticsOptimizerView: React.FC<LogisticsOptimizerViewProps> = ({ 
           <span className="text-2xl font-black text-emerald-400">
             {routeResult.distanceSavedKm} km
           </span>
-          <p className="text-stone-400 text-[11px] mt-0.5">Over 55% reduction in empty miles</p>
+          <p className="text-stone-400 text-[11px] mt-0.5">{distanceSavedPct}% reduction in empty miles</p>
         </div>
 
         <div>

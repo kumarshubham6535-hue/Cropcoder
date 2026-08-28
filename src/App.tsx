@@ -210,10 +210,13 @@ export default function App() {
       {/* Main View Router */}
       <main className="flex-1">
         {activeTab === 'home' && (
-          <LandingPage onSelectTab={(tab) => {
-            setActiveTab(tab);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }} />
+          <LandingPage
+            listings={listings}
+            onSelectTab={(tab) => {
+              setActiveTab(tab);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
         )}
 
         {activeTab === 'farmer' && (
