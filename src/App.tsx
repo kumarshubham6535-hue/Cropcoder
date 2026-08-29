@@ -10,14 +10,17 @@ import { LogisticsOptimizerView } from './components/LogisticsOptimizerView';
 import { OrdersView } from './components/OrdersView';
 import { Footer } from './components/Footer';
 
+const ORDERS_STORAGE_KEY = 'kd_orders_v7';
+const LISTINGS_STORAGE_KEY = 'kd_listings_v7';
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
 
   // Listings state (stored in localStorage with automatic hydration of all state agricultural listings)
   const [listings, setListings] = useState<ProduceListing[]>(() => {
     try {
-      const saved = localStorage.getItem('kd_listings_v5') || localStorage.getItem('kd_listings_v2') || localStorage.getItem('kd_listings');
-      if (saved) {
+      const saved = localStorage.getItem(LISTINGS_STORAGE_KEY) || localStorage.getItem('kd_listings_v5') || localStorage.getItem('kd_listings_v2') || localStorage.getItem('kd_listings');
+      if (saved !== null) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
           // Identify any custom listings created by user
@@ -62,14 +65,23 @@ export default function App() {
     return INITIAL_PRODUCE_LISTINGS;
   });
 
-  // Orders state
+  // Orders state - accurately persisted and restored without resurrected deleted/cancelled orders
   const [orders, setOrders] = useState<MarketplaceOrder[]>(() => {
     try {
-      const saved = localStorage.getItem('kd_orders_v6') || localStorage.getItem('kd_orders_v5');
-      if (saved) {
+      const saved = localStorage.getItem(ORDERS_STORAGE_KEY);
+      if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed;
+        }
+      }
+
+      // Check legacy storage once if v7 does not exist yet
+      const legacy = localStorage.getItem('kd_orders_v6') || localStorage.getItem('kd_orders_v5');
+      if (legacy !== null) {
+        const parsedLegacy = JSON.parse(legacy);
+        if (Array.isArray(parsedLegacy)) {
+          return parsedLegacy;
         }
       }
     } catch {
@@ -80,7 +92,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('kd_listings_v5', JSON.stringify(listings));
+      localStorage.setItem(LISTINGS_STORAGE_KEY, JSON.stringify(listings));
     } catch (e) {
       console.warn('Failed to save listings to localStorage', e);
     }
@@ -88,7 +100,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('kd_orders_v6', JSON.stringify(orders));
+      localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
     } catch (e) {
       console.warn('Failed to save orders to localStorage', e);
     }
@@ -96,16 +108,32 @@ export default function App() {
 
   // Handler to add new produce from farmer hub
   const handleAddListing = (newListing: ProduceListing) => {
-    setListings((prev) => [newListing, ...prev]);
+    setListings((prev) => {
+      const updated = [newListing, ...prev];
+      try {
+        localStorage.setItem(LISTINGS_STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.warn(e);
+      }
+      return updated;
+    });
   };
 
   // Handler when a buyer places an order
   const handlePlaceOrder = (newOrder: MarketplaceOrder) => {
-    setOrders((prev) => [newOrder, ...prev]);
+    setOrders((prev) => {
+      const updated = [newOrder, ...prev];
+      try {
+        localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.warn(e);
+      }
+      return updated;
+    });
 
     // Update remaining quantity in listing
-    setListings((prev) =>
-      prev.map((item) => {
+    setListings((prev) => {
+      const updated = prev.map((item) => {
         if (item.id === newOrder.listingId) {
           const remaining = Math.max(0, item.quantityAvailableQuintals - newOrder.quantityQuintals);
           return {
@@ -115,8 +143,14 @@ export default function App() {
           };
         }
         return item;
-      })
-    );
+      });
+      try {
+        localStorage.setItem(LISTINGS_STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.warn(e);
+      }
+      return updated;
+    });
 
     // Switch to Orders view so buyer sees real-time logistics steps & price certificate
     setActiveTab('orders');
@@ -128,8 +162,8 @@ export default function App() {
     let targetListingId: string | undefined;
     let targetQty: number = 0;
 
-    setOrders((prev) =>
-      prev.map((order) => {
+    setOrders((prev) => {
+      const updated = prev.map((order) => {
         if (order.id === orderId) {
           targetListingId = order.listingId;
           targetQty = order.quantityQuintals;
@@ -145,13 +179,20 @@ export default function App() {
           };
         }
         return order;
-      })
-    );
+      });
+
+      try {
+        localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.warn('Failed to sync cancelled order to localStorage', e);
+      }
+      return updated;
+    });
 
     // Return stock back to the active produce listing
     if (targetListingId) {
-      setListings((prev) =>
-        prev.map((item) => {
+      setListings((prev) => {
+        const updated = prev.map((item) => {
           if (item.id === targetListingId) {
             const restoredQty = item.quantityAvailableQuintals + targetQty;
             return {
@@ -161,15 +202,21 @@ export default function App() {
             };
           }
           return item;
-        })
-      );
+        });
+        try {
+          localStorage.setItem(LISTINGS_STORAGE_KEY, JSON.stringify(updated));
+        } catch (e) {
+          console.warn(e);
+        }
+        return updated;
+      });
     }
   };
 
   // Handler to advance order status lifecycle (confirmed -> aggregated -> in_transit -> delivered)
   const handleUpdateStatus = (orderId: string, newStatus: MarketplaceOrder['status']) => {
-    setOrders((prev) =>
-      prev.map((order) => {
+    setOrders((prev) => {
+      const updated = prev.map((order) => {
         if (order.id === orderId) {
           let stepDescription = order.logisticsStep;
           if (newStatus === 'aggregated') {
@@ -186,13 +233,27 @@ export default function App() {
           };
         }
         return order;
-      })
-    );
+      });
+      try {
+        localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.warn(e);
+      }
+      return updated;
+    });
   };
 
   // Handler to permanently delete/dismiss an order record
   const handleDeleteOrder = (orderId: string) => {
-    setOrders((prev) => prev.filter((order) => order.id !== orderId));
+    setOrders((prev) => {
+      const updated = prev.filter((order) => order.id !== orderId);
+      try {
+        localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.warn('Failed to sync deleted order to localStorage', e);
+      }
+      return updated;
+    });
   };
 
   return (

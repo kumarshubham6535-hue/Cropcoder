@@ -60,7 +60,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, onCancelOrder, o
     setCustomNote('');
   };
 
-  const handleConfirmCancel = () => {
+  const handleConfirmCancel = (deleteAfterCancel: boolean = false) => {
     if (!cancellingOrder) return;
     const orderId = cancellingOrder.id;
     const orderNum = cancellingOrder.orderNumber;
@@ -72,9 +72,14 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, onCancelOrder, o
       onCancelOrder(orderId, reasonToSave, noteToSave);
     }
     
+    if (deleteAfterCancel && onDeleteOrder) {
+      onDeleteOrder(orderId);
+      setActionSuccessMsg(`Order ${orderNum} cancelled and removed. 100% Refund (₹${refundAmt}) initiated.`);
+    } else {
+      setActionSuccessMsg(`Delivery for Order ${orderNum} has been cancelled. 100% Refund of ₹${refundAmt} initiated to buyer account.`);
+    }
+
     setCancellingOrder(null);
-    setFilter('all'); // Ensure the user immediately sees the cancelled order with refund details
-    setActionSuccessMsg(`Delivery for Order ${orderNum} has been cancelled. 100% Refund of ₹${refundAmt} initiated to buyer account.`);
     setTimeout(() => {
       setActionSuccessMsg(null);
     }, 8000);
@@ -297,15 +302,32 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, onCancelOrder, o
 
                 {/* Cancelled Notice Banner if Order is Cancelled */}
                 {isCancelled && (
-                  <div className="p-3.5 bg-rose-50/80 rounded-xl border border-rose-200 text-xs space-y-1.5">
+                  <div className="p-3.5 bg-rose-50/80 rounded-xl border border-rose-200 text-xs space-y-2">
                     <div className="flex items-center justify-between gap-2 flex-wrap font-bold text-rose-900">
                       <span className="flex items-center gap-1.5">
                         <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                         Delivery Cancelled on {order.cancelledAt ? new Date(order.cancelledAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Recently'}
                       </span>
-                      <span className="bg-rose-200/70 text-rose-900 px-2 py-0.5 rounded text-[11px] font-mono">
-                        100% Refund ₹{(order.refundAmount || order.totalAmount).toLocaleString('en-IN')} Processed
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="bg-rose-200/70 text-rose-900 px-2 py-0.5 rounded text-[11px] font-mono">
+                          100% Refund ₹{(order.refundAmount || order.totalAmount).toLocaleString('en-IN')} Processed
+                        </span>
+                        {onDeleteOrder && (
+                          <button
+                            id={`dismiss-cancelled-order-btn-${order.id}`}
+                            onClick={() => {
+                              onDeleteOrder(order.id);
+                              setActionSuccessMsg(`Order ${order.orderNumber} permanently dismissed from list.`);
+                              setTimeout(() => setActionSuccessMsg(null), 4000);
+                            }}
+                            className="px-2 py-0.5 bg-rose-100 hover:bg-rose-200 text-rose-800 rounded font-semibold text-[11px] cursor-pointer inline-flex items-center gap-1 transition-colors"
+                            title="Remove this cancelled order permanently from history"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>Dismiss Record</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                     {order.cancellationReason && (
                       <p className="text-rose-800 text-[11px]">
@@ -589,25 +611,40 @@ export const OrdersView: React.FC<OrdersViewProps> = ({ orders, onCancelOrder, o
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-2 border-t border-stone-100">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2 border-t border-stone-100">
               <button
                 id="cancel-modal-keep-btn"
                 type="button"
                 onClick={() => setCancellingOrder(null)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors cursor-pointer"
+                className="px-3.5 py-2 rounded-xl text-xs font-bold text-stone-600 bg-stone-100 hover:bg-stone-200 transition-colors cursor-pointer"
               >
                 Keep Delivery Active
               </button>
 
-              <button
-                id="cancel-modal-confirm-btn"
-                type="button"
-                onClick={handleConfirmCancel}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-700 hover:bg-rose-800 transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-xs"
-              >
-                <Ban className="w-3.5 h-3.5" />
-                <span>Confirm Delivery Cancellation</span>
-              </button>
+              <div className="flex items-center gap-2 flex-wrap">
+                {onDeleteOrder && (
+                  <button
+                    id="cancel-modal-delete-btn"
+                    type="button"
+                    onClick={() => handleConfirmCancel(true)}
+                    className="px-3.5 py-2 rounded-xl text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer inline-flex items-center gap-1"
+                    title="Cancel delivery, process 100% refund, and remove order completely"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Cancel & Remove Completely</span>
+                  </button>
+                )}
+
+                <button
+                  id="cancel-modal-confirm-btn"
+                  type="button"
+                  onClick={() => handleConfirmCancel(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-700 hover:bg-rose-800 transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-xs"
+                >
+                  <Ban className="w-3.5 h-3.5" />
+                  <span>Cancel Delivery (Keep in History)</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
