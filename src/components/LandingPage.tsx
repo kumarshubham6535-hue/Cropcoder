@@ -18,25 +18,87 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectTab, listings 
     <div id="landing-page" className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8 text-stone-800">
       {/* Redesigned Compact Hero Banner with Direct CTAs */}
       <section className="relative overflow-hidden bg-[#1B4332] text-white p-5 sm:p-8 rounded-2xl border border-[#2d5f49] shadow-lg space-y-5">
-        {/* Resilient Thematic Background Pattern (Agricultural Contour & Sunrise Gradient) */}
-        <div className="absolute inset-0 z-0 pointer-events-none opacity-20">
-          <svg className="w-full h-full object-cover" viewBox="0 0 1200 600" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        {/* Smart Agriculture Connected Background Layer (Precision Farming, Drone Telemetry & Field Network) */}
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+          {/* Base Smart Agriculture Photography */}
+          <img
+            src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=2000&q=80"
+            alt="Smart precision agriculture field with drone monitoring and automated machinery"
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover object-center opacity-30 mix-blend-luminosity scale-105"
+          />
+
+          {/* Connected Network & Drone Telemetry Vector Overlay (Matching User's Smart Farming Visual) */}
+          <svg className="absolute inset-0 w-full h-full object-cover opacity-35" viewBox="0 0 1200 600" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
             <defs>
-              <linearGradient id="sunGlow" x1="50%" y1="0%" x2="50%" y2="100%">
-                <stop offset="0%" stopColor="#D4A24E" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="#1B4332" stopOpacity="0" />
+              <linearGradient id="gridGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#52B788" stopOpacity="0.6" />
+                <stop offset="50%" stopColor="#D4A24E" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#1B4332" stopOpacity="0.1" />
               </linearGradient>
-              <linearGradient id="fieldWave" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#52B788" stopOpacity="0.4" />
-                <stop offset="100%" stopColor="#2D6A4F" stopOpacity="0.1" />
-              </linearGradient>
+              <radialGradient id="satelliteNode" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#D4A24E" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#D4A24E" stopOpacity="0" />
+              </radialGradient>
             </defs>
-            <circle cx="950" cy="120" r="280" fill="url(#sunGlow)" />
-            <path d="M0 400 C 300 320, 600 480, 1200 350 L 1200 600 L 0 600 Z" fill="url(#fieldWave)" />
-            <path d="M0 460 C 400 390, 800 520, 1200 420 L 1200 600 L 0 600 Z" fill="#2D6A4F" fillOpacity="0.3" />
-            <path d="M0 520 C 350 480, 750 560, 1200 500 L 1200 600 L 0 600 Z" fill="#143326" fillOpacity="0.5" />
+
+            {/* Constellation & Satellite Network Mesh in the Sky */}
+            <g stroke="#52B788" strokeWidth="0.75" strokeDasharray="3 3" opacity="0.6">
+              <line x1="520" y1="90" x2="610" y2="140" />
+              <line x1="610" y1="140" x2="700" y2="110" />
+              <line x1="700" y1="110" x2="820" y2="150" />
+              <line x1="610" y1="140" x2="680" y2="200" />
+              <line x1="520" y1="90" x2="580" y2="220" />
+              <line x1="680" y1="200" x2="820" y2="150" />
+              <line x1="700" y1="110" x2="760" y2="60" />
+              <line x1="610" y1="140" x2="640" y2="70" />
+              <line x1="220" y1="110" x2="520" y2="90" stroke="#D4A24E" strokeWidth="1" />
+            </g>
+
+            {/* Network Nodes */}
+            <circle cx="520" cy="90" r="3" fill="#D4A24E" />
+            <circle cx="610" cy="140" r="4" fill="#52B788" />
+            <circle cx="700" cy="110" r="3.5" fill="#D4A24E" />
+            <circle cx="820" cy="150" r="3" fill="#52B788" />
+            <circle cx="680" cy="200" r="3.5" fill="#D4A24E" />
+            <circle cx="580" cy="220" r="2.5" fill="#52B788" />
+            <circle cx="640" cy="70" r="2.5" fill="#D4A24E" />
+            <circle cx="760" cy="60" r="3" fill="#52B788" />
+            <circle cx="610" cy="140" r="14" fill="url(#satelliteNode)" />
+
+            {/* Smart Drone Silhouette & Signal Cone on Left */}
+            <g transform="translate(180, 80)">
+              {/* Drone Body */}
+              <ellipse cx="40" cy="20" rx="14" ry="5" fill="#D4A24E" />
+              <line x1="20" y1="15" x2="60" y2="25" stroke="#D4A24E" strokeWidth="2" />
+              <line x1="20" y1="25" x2="60" y2="15" stroke="#D4A24E" strokeWidth="2" />
+              {/* Rotors */}
+              <ellipse cx="18" cy="14" rx="8" ry="2" fill="#52B788" opacity="0.8" />
+              <ellipse cx="62" cy="14" rx="8" ry="2" fill="#52B788" opacity="0.8" />
+              <ellipse cx="18" cy="26" rx="8" ry="2" fill="#52B788" opacity="0.8" />
+              <ellipse cx="62" cy="26" rx="8" ry="2" fill="#52B788" opacity="0.8" />
+              {/* Sensor Camera & Downlink Beam */}
+              <circle cx="40" cy="25" r="3" fill="#ffffff" />
+              <polygon points="35,28 45,28 90,260 -10,260" fill="url(#gridGlow)" opacity="0.15" />
+            </g>
+
+            {/* Secondary Field Survey Drone */}
+            <g transform="translate(130, 160) scale(0.6)">
+              <ellipse cx="40" cy="20" rx="12" ry="4" fill="#52B788" />
+              <line x1="22" y1="16" x2="58" y2="24" stroke="#52B788" strokeWidth="1.5" />
+              <line x1="22" y1="24" x2="58" y2="16" stroke="#52B788" strokeWidth="1.5" />
+            </g>
+
+            {/* Precision Crop Field Rows / Furrow Lines */}
+            <path d="M 0 420 Q 300 380 600 440 T 1200 400" stroke="#52B788" strokeWidth="1.5" opacity="0.3" fill="none" />
+            <path d="M 0 470 Q 300 430 600 490 T 1200 450" stroke="#52B788" strokeWidth="1.5" opacity="0.4" fill="none" />
+            <path d="M 0 520 Q 300 480 600 540 T 1200 500" stroke="#2D6A4F" strokeWidth="2" opacity="0.5" fill="none" />
+            <path d="M 0 570 Q 300 530 600 590 T 1200 550" stroke="#143326" strokeWidth="2.5" opacity="0.6" fill="none" />
           </svg>
-          <div className="absolute inset-0 bg-gradient-to-r from-[#112d22]/90 via-[#1B4332]/80 to-[#153a2b]/70" />
+
+          {/* Deep Forest Gradient Overlays for High Legibility & WCAG AA Contrast */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#112d22]/95 via-[#1B4332]/90 to-[#153a2b]/85" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#1B4332] via-transparent to-transparent opacity-80" />
         </div>
 
         <div className="relative z-10 space-y-4">
