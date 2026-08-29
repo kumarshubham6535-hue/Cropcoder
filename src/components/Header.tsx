@@ -122,6 +122,16 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               )}
             </button>
+
+            {/* Supabase Realtime Live Indicator */}
+            <div 
+              title="Connected to Supabase PostgreSQL & Realtime Engine"
+              className="ml-2 pl-2 border-l border-[#2d5f49] flex items-center gap-1.5 text-[10px] text-emerald-200 font-mono bg-[#143326]/60 px-2 py-1 rounded-md border border-emerald-500/20"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-xs shadow-emerald-400"></span>
+              <span className="hidden lg:inline text-emerald-300 font-bold">Supabase</span>
+              <span className="text-[9px] text-emerald-300/80">Live</span>
+            </div>
           </nav>
         </div>
 

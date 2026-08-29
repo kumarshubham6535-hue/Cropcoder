@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ProduceListing, MarketplaceOrder } from './types';
 import { INITIAL_PRODUCE_LISTINGS, INITIAL_MARKETPLACE_ORDERS } from './data/marketplaceData';
 import { Header, ActiveTab } from './components/Header';
@@ -9,12 +9,23 @@ import { DemandForecastView } from './components/DemandForecastView';
 import { LogisticsOptimizerView } from './components/LogisticsOptimizerView';
 import { OrdersView } from './components/OrdersView';
 import { Footer } from './components/Footer';
+import { 
+  fetchSupabaseProduceListings, 
+  createSupabaseProduceListing, 
+  fetchSupabaseMarketplaceOrders, 
+  createSupabaseMarketplaceOrder, 
+  cancelSupabaseOrder, 
+  updateSupabaseOrderStatus, 
+  deleteSupabaseOrder 
+} from './services/supabaseService';
+import { supabase, isSupabaseConfigured } from './services/supabaseClient';
 
 const ORDERS_STORAGE_KEY = 'kd_orders_v7';
 const LISTINGS_STORAGE_KEY = 'kd_listings_v7';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
+  const [isSyncingWithDB, setIsSyncingWithDB] = useState<boolean>(false);
 
   // Listings state (stored in localStorage with automatic hydration of all state agricultural listings)
   const [listings, setListings] = useState<ProduceListing[]>(() => {
@@ -90,6 +101,73 @@ export default function App() {
     return INITIAL_MARKETPLACE_ORDERS;
   });
 
+  // Fetch initial data from Supabase backend on startup
+  useEffect(() => {
+    let isMounted = true;
+    async function loadBackendData() {
+      setIsSyncingWithDB(true);
+      try {
+        const [listingsRes, ordersRes] = await Promise.all([
+          fetchSupabaseProduceListings(),
+          fetchSupabaseMarketplaceOrders()
+        ]);
+
+        if (isMounted) {
+          if (listingsRes.data && listingsRes.data.length > 0) {
+            // Merge Supabase listings with default catalog to ensure complete state coverage
+            const dbIds = new Set(listingsRes.data.map(l => l.id));
+            const missingDefaults = INITIAL_PRODUCE_LISTINGS.filter(d => !dbIds.has(d.id));
+            setListings([...listingsRes.data, ...missingDefaults]);
+          }
+
+          if (ordersRes.data && ordersRes.data.length > 0) {
+            setOrders(ordersRes.data);
+          }
+        }
+      } catch (err) {
+        console.warn('Initial Supabase hydration notice:', err);
+      } finally {
+        if (isMounted) {
+          setIsSyncingWithDB(false);
+        }
+      }
+    }
+
+    loadBackendData();
+
+    // Setup Supabase Realtime Subscription for instant cross-tab & multi-device sync
+    const channel = supabase
+      .channel('kisan-realtime-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'produce_listings' },
+        async () => {
+          const res = await fetchSupabaseProduceListings();
+          if (res.data && res.data.length > 0 && isMounted) {
+            const dbIds = new Set(res.data.map(l => l.id));
+            const missingDefaults = INITIAL_PRODUCE_LISTINGS.filter(d => !dbIds.has(d.id));
+            setListings([...res.data, ...missingDefaults]);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'marketplace_orders' },
+        async () => {
+          const res = await fetchSupabaseMarketplaceOrders();
+          if (res.data && isMounted) {
+            setOrders(res.data);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem(LISTINGS_STORAGE_KEY, JSON.stringify(listings));
@@ -106,7 +184,7 @@ export default function App() {
     }
   }, [orders]);
 
-  // Handler to add new produce from farmer hub
+  // Handler to add new produce from farmer hub (with Supabase sync)
   const handleAddListing = (newListing: ProduceListing) => {
     setListings((prev) => {
       const updated = [newListing, ...prev];
@@ -117,9 +195,14 @@ export default function App() {
       }
       return updated;
     });
+
+    // Write to Supabase produce_listings table
+    createSupabaseProduceListing(newListing).catch((err) => {
+      console.warn('Supabase create produce notice:', err);
+    });
   };
 
-  // Handler when a buyer places an order
+  // Handler when a buyer places an order (with Supabase sync)
   const handlePlaceOrder = (newOrder: MarketplaceOrder) => {
     setOrders((prev) => {
       const updated = [newOrder, ...prev];
@@ -152,21 +235,28 @@ export default function App() {
       return updated;
     });
 
+    // Save to Supabase marketplace_orders table
+    createSupabaseMarketplaceOrder(newOrder).catch((err) => {
+      console.warn('Supabase create order notice:', err);
+    });
+
     // Switch to Orders view so buyer sees real-time logistics steps & price certificate
     setActiveTab('orders');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Handler when buyer/farmer cancels a delivery
+  // Handler when buyer/farmer cancels a delivery (with Supabase sync)
   const handleCancelOrder = (orderId: string, reason: string, note?: string) => {
     let targetListingId: string | undefined;
     let targetQty: number = 0;
+    let refundAmount: number = 0;
 
     setOrders((prev) => {
       const updated = prev.map((order) => {
         if (order.id === orderId) {
           targetListingId = order.listingId;
           targetQty = order.quantityQuintals;
+          refundAmount = order.totalAmount;
           return {
             ...order,
             status: 'cancelled' as const,
@@ -211,14 +301,21 @@ export default function App() {
         return updated;
       });
     }
+
+    // Sync cancellation to Supabase
+    cancelSupabaseOrder(orderId, reason, note, refundAmount, targetListingId, targetQty).catch((err) => {
+      console.warn('Supabase cancel order notice:', err);
+    });
   };
 
   // Handler to advance order status lifecycle (confirmed -> aggregated -> in_transit -> delivered)
   const handleUpdateStatus = (orderId: string, newStatus: MarketplaceOrder['status']) => {
+    let stepDescription: string | undefined;
+
     setOrders((prev) => {
       const updated = prev.map((order) => {
         if (order.id === orderId) {
-          let stepDescription = order.logisticsStep;
+          stepDescription = order.logisticsStep;
           if (newStatus === 'aggregated') {
             stepDescription = `Produce aggregated & inspected at ${order.farmerPickupLocation || 'Collection Center'} • Barcode batch assigned`;
           } else if (newStatus === 'in_transit') {
@@ -241,9 +338,14 @@ export default function App() {
       }
       return updated;
     });
+
+    // Sync status update to Supabase
+    updateSupabaseOrderStatus(orderId, newStatus, stepDescription).catch((err) => {
+      console.warn('Supabase update status notice:', err);
+    });
   };
 
-  // Handler to permanently delete/dismiss an order record
+  // Handler to permanently delete/dismiss an order record (with Supabase sync)
   const handleDeleteOrder = (orderId: string) => {
     setOrders((prev) => {
       const updated = prev.filter((order) => order.id !== orderId);
@@ -253,6 +355,11 @@ export default function App() {
         console.warn('Failed to sync deleted order to localStorage', e);
       }
       return updated;
+    });
+
+    // Delete in Supabase
+    deleteSupabaseOrder(orderId).catch((err) => {
+      console.warn('Supabase delete order notice:', err);
     });
   };
 

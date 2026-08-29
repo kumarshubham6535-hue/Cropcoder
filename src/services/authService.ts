@@ -1,5 +1,11 @@
 // KisanDirect Secure Authentication & OTP Verification Service
 import { FarmerProfile } from '../types';
+import { 
+  syncSupabaseProfile, 
+  saveSupabaseOTPChallenge, 
+  verifySupabaseStoredOTP,
+  fetchSupabaseProfileByPhone 
+} from './supabaseService';
 
 export interface AuthUser extends FarmerProfile {
   passwordHash: string;
@@ -212,6 +218,9 @@ export function requestOTPChallenge(
     // ignore
   }
 
+  // Asynchronously record OTP challenge in Supabase otp_challenges table
+  saveSupabaseOTPChallenge(normalized, otpCode, purpose, payload, challenge.expiresAt).catch(() => {});
+
   return {
     success: true,
     message: `Security OTP sent to ${normalized}.`,
@@ -310,6 +319,9 @@ export function verifyOTPChallenge(
     saveRegisteredUsers(users);
     saveActiveAuthSession(newUser);
     clearActiveOTPChallenge();
+
+    // Sync to Supabase profiles table
+    syncSupabaseProfile(newUser).catch(err => console.warn('Supabase profile sync notice:', err));
 
     return {
       success: true,
@@ -416,6 +428,9 @@ export function updateAuthProfile(
   if (active && active.id === userId) {
     saveActiveAuthSession(updatedUser);
   }
+
+  // Sync profile edits to Supabase
+  syncSupabaseProfile(updatedUser).catch(err => console.warn('Supabase profile update sync notice:', err));
 
   return {
     success: true,

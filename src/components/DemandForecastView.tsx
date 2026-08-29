@@ -1,10 +1,34 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { REGIONAL_HISTORICAL_DATASETS } from '../data/forecastingData';
 import { generateCropForecast } from '../services/forecastingEngine';
-import { TrendingUp, Sparkles, DollarSign, Calendar, BarChart2, Info, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { fetchSupabaseAPMCBenchmarks, DBAPMCBenchmarkRow } from '../services/supabaseService';
+import { TrendingUp, Sparkles, DollarSign, Calendar, BarChart2, Info, ArrowUpRight, ArrowDownRight, Database } from 'lucide-react';
 
 export const DemandForecastView: React.FC = () => {
   const [selectedCropId, setSelectedCropId] = useState<string>('onion');
+  const [dbBenchmarks, setDbBenchmarks] = useState<DBAPMCBenchmarkRow[]>([]);
+  const [isLoadingDB, setIsLoadingDB] = useState<boolean>(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadBenchmarks() {
+      setIsLoadingDB(true);
+      try {
+        const rows = await fetchSupabaseAPMCBenchmarks(selectedCropId);
+        if (isMounted && rows && rows.length > 0) {
+          setDbBenchmarks(rows);
+        }
+      } catch (err) {
+        console.warn('Could not load benchmarks from Supabase:', err);
+      } finally {
+        if (isMounted) setIsLoadingDB(false);
+      }
+    }
+    loadBenchmarks();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedCropId]);
 
   const dataset = useMemo(() => {
     return REGIONAL_HISTORICAL_DATASETS.find(d => d.cropId === selectedCropId) || REGIONAL_HISTORICAL_DATASETS[0];
@@ -133,6 +157,27 @@ export const DemandForecastView: React.FC = () => {
         </div>
 
         {/* Data Table */}
+        {dbBenchmarks.length > 0 && (
+          <div className="mb-4 p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-900 mb-2">
+              <Database className="w-3.5 h-3.5 text-emerald-700" />
+              <span>Live APMC Mandi Records from Supabase Database ({dbBenchmarks.length} Active Records)</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+              {dbBenchmarks.map((b, idx) => (
+                <div key={b.id || idx} className="bg-white p-2.5 rounded-lg border border-emerald-100 shadow-xs">
+                  <div className="font-bold text-stone-900">{b.mandi_name || 'APMC Mandi'}</div>
+                  <div className="text-[11px] text-stone-500">{b.district}, {b.state}</div>
+                  <div className="mt-1 flex items-center justify-between text-xs">
+                    <span className="font-black text-emerald-800">Modal: ₹{b.modal_price_per_quintal}/Qtl</span>
+                    <span className="text-stone-500 font-mono">Arr: {b.arrivals_tonnes}T</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
