@@ -1,6 +1,7 @@
-import React, { useState, useId } from 'react';
+import React, { useState, useId, useMemo } from 'react';
 import { ProduceListing, MarketplaceOrder } from '../types';
 import { X, MapPin, Truck, ShieldCheck, CheckCircle2, Calendar, TrendingDown, DollarSign } from 'lucide-react';
+import { INDIAN_STATES_AND_UT } from '../data/indianStates';
 
 interface CheckoutModalProps {
   listing: ProduceListing;
@@ -243,24 +244,53 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
             <div className="grid grid-cols-2 gap-2">
               <div>
+                <label className="block text-stone-600 mb-1 font-semibold">State / UT *</label>
+                <select
+                  value={state}
+                  onChange={(e) => {
+                    const newState = e.target.value;
+                    setState(newState);
+                    const stateObj = INDIAN_STATES_AND_UT.find(
+                      (s) => s.nameEn === newState || s.nameHi === newState || s.code === newState
+                    );
+                    if (stateObj && stateObj.districts.length > 0 && !stateObj.districts.includes(district)) {
+                      setDistrict(stateObj.districts[0]);
+                    }
+                  }}
+                  className="w-full p-2 bg-stone-50 border border-stone-300 rounded-lg text-xs"
+                  required
+                >
+                  <optgroup label="States (28)">
+                    {INDIAN_STATES_AND_UT.filter((s) => !s.nameEn.includes('(UT)') && !s.nameEn.includes('(NCT)')).map((st) => (
+                      <option key={st.code} value={st.nameEn}>
+                        {st.nameEn}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Union Territories (8)">
+                    {INDIAN_STATES_AND_UT.filter((s) => s.nameEn.includes('(UT)') || s.nameEn.includes('(NCT)')).map((st) => (
+                      <option key={st.code} value={st.nameEn}>
+                        {st.nameEn}
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+              </div>
+              <div>
                 <label className="block text-stone-600 mb-1 font-semibold">Destination District *</label>
                 <input
                   type="text"
+                  list="checkout-district-options"
                   value={district}
                   onChange={(e) => setDistrict(e.target.value)}
                   className="w-full p-2 bg-stone-50 border border-stone-300 rounded-lg"
                   required
                 />
-              </div>
-              <div>
-                <label className="block text-stone-600 mb-1 font-semibold">State *</label>
-                <input
-                  type="text"
-                  value={state}
-                  onChange={(e) => setState(e.target.value)}
-                  className="w-full p-2 bg-stone-50 border border-stone-300 rounded-lg"
-                  required
-                />
+                <datalist id="checkout-district-options">
+                  {(INDIAN_STATES_AND_UT.find(s => s.nameEn === state || s.code === state)?.districts || []).map((d) => (
+                    <option key={d} value={d} />
+                  ))}
+                </datalist>
               </div>
             </div>
           </div>
