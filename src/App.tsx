@@ -9,6 +9,8 @@ import { DemandForecastView } from './components/DemandForecastView';
 import { LogisticsOptimizerView } from './components/LogisticsOptimizerView';
 import { OrdersView } from './components/OrdersView';
 import { Footer } from './components/Footer';
+import { FarmerAuthModal } from './components/FarmerAuthModal';
+import { AuthUser, getActiveAuthSession, saveActiveAuthSession } from './services/authService';
 import { 
   fetchSupabaseProduceListings, 
   createSupabaseProduceListing, 
@@ -24,6 +26,9 @@ const ORDERS_STORAGE_KEY = 'kd_orders_v7';
 const LISTINGS_STORAGE_KEY = 'kd_listings_v7';
 
 export default function App() {
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
+    return getActiveAuthSession();
+  });
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [isSyncingWithDB, setIsSyncingWithDB] = useState<boolean>(false);
 
@@ -363,6 +368,28 @@ export default function App() {
     });
   };
 
+  // Auth Handlers
+  const handleLoginSuccess = (user: AuthUser) => {
+    saveActiveAuthSession(user);
+    setCurrentUser(user);
+  };
+
+  const handleLogout = () => {
+    saveActiveAuthSession(null);
+    setCurrentUser(null);
+    setActiveTab('home');
+  };
+
+  // If unauthenticated, show the Login / Signup / OTP Gate as the first screen
+  if (!currentUser) {
+    return (
+      <FarmerAuthModal
+        isFullScreen
+        onSuccess={handleLoginSuccess}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-stone-900 flex flex-col font-sans selection:bg-[#D4A24E] selection:text-[#1B4332]">
       {/* Top Navigation */}
@@ -373,6 +400,8 @@ export default function App() {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
         ordersCount={orders.filter(o => o.status !== 'cancelled').length}
+        currentUser={currentUser}
+        onLogout={handleLogout}
       />
 
       {/* Main View Router */}
@@ -391,6 +420,12 @@ export default function App() {
           <FarmerHub
             listings={listings}
             onAddListing={handleAddListing}
+            currentUser={currentUser}
+            onLogout={handleLogout}
+            onUserUpdate={(updatedUser) => {
+              setCurrentUser(updatedUser);
+              saveActiveAuthSession(updatedUser);
+            }}
           />
         )}
 

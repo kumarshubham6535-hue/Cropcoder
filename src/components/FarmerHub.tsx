@@ -20,6 +20,9 @@ import { FarmerAuthModal, AuthMode } from './FarmerAuthModal';
 interface FarmerHubProps {
   listings: ProduceListing[];
   onAddListing: (listing: ProduceListing) => void;
+  currentUser?: AuthUser | null;
+  onLogout?: () => void;
+  onUserUpdate?: (user: AuthUser) => void;
 }
 
 const SUPPORTED_CROPS = [
@@ -39,11 +42,23 @@ const SUPPORTED_CROPS = [
   { id: 'sona_masoori', name: 'Sona Masoori Rice (Nalgonda Medium Grain)', state: 'Telangana', district: 'Nalgonda' },
 ];
 
-export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) => {
+export const FarmerHub: React.FC<FarmerHubProps> = ({ 
+  listings, 
+  onAddListing,
+  currentUser: propUser,
+  onLogout,
+  onUserUpdate
+}) => {
   // Authenticated farmer user session
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
-    return getActiveAuthSession();
+    return propUser !== undefined ? propUser : getActiveAuthSession();
   });
+
+  useEffect(() => {
+    if (propUser !== undefined) {
+      setCurrentUser(propUser);
+    }
+  }, [propUser]);
 
   // Auth Modal State
   const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
@@ -84,12 +99,14 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
     saveActiveAuthSession(null);
     setCurrentUser(null);
     setIsEditingProfile(false);
+    onLogout?.();
   };
 
   // Handle Auth Success
   const handleAuthSuccess = (user: AuthUser) => {
     setCurrentUser(user);
     saveActiveAuthSession(user);
+    onUserUpdate?.(user);
     setProfileSuccessMsg(`Logged in securely as ${user.name}`);
     setTimeout(() => setProfileSuccessMsg(null), 4000);
   };
@@ -111,6 +128,7 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({ listings, onAddListing }) 
 
     if (result.success && result.user) {
       setCurrentUser(result.user);
+      onUserUpdate?.(result.user);
       setProfileSuccessMsg('Profile and location details updated successfully.');
       setIsEditingProfile(false);
       setTimeout(() => setProfileSuccessMsg(null), 4000);

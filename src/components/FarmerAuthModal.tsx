@@ -19,8 +19,9 @@ import {
 export type AuthMode = 'login' | 'signup' | 'forgot_password';
 
 interface FarmerAuthModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  isFullScreen?: boolean;
+  onClose?: () => void;
   onSuccess: (user: AuthUser) => void;
   initialMode?: AuthMode;
 }
@@ -32,7 +33,8 @@ const INDIAN_STATES = [
 ];
 
 export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
-  isOpen,
+  isOpen = true,
+  isFullScreen = false,
   onClose,
   onSuccess,
   initialMode = 'login'
@@ -110,7 +112,7 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
         setSuccessMsg(result.message);
         setTimeout(() => {
           onSuccess(result.user!);
-          onClose();
+          onClose?.();
         }, 600);
       } else {
         setErrorMsg(result.message);
@@ -196,7 +198,7 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
         setSuccessMsg(result.message);
         setTimeout(() => {
           onSuccess(result.user!);
-          onClose();
+          onClose?.();
         }, 800);
       } else {
         setErrorMsg(result.message);
@@ -261,7 +263,7 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
         setSuccessMsg(result.message);
         setTimeout(() => {
           onSuccess(result.user!);
-          onClose();
+          onClose?.();
         }, 800);
       } else {
         setErrorMsg(result.message);
@@ -291,32 +293,32 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
     setSuccessMsg(`Selected demo profile: ${user.name}`);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-xs overflow-y-auto animate-fade-in">
-      <div className="bg-[#FDFBF7] rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-stone-300 text-stone-800 relative overflow-hidden my-6">
-        {/* Header Branding */}
-        <div className="flex items-start justify-between border-b border-stone-200 pb-4 mb-5">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-[#1B4332] text-[#D4A24E] flex items-center justify-center font-black text-xl shadow-xs shrink-0">
-              <Sprout className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-black text-[#1B4332]">
-                  {mode === 'login' && 'Farmer / FPO Secure Login'}
-                  {mode === 'signup' && 'Register New Farmer Profile'}
-                  {mode === 'forgot_password' && 'Reset Account Password'}
-                </h2>
-                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full border border-emerald-300 flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3" /> OTP Protected
-                </span>
-              </div>
-              <p className="text-xs text-stone-500 mt-0.5">
-                Direct Farmgate Exchange • Identity & Farm Protection
-              </p>
-            </div>
+  const modalContent = (
+    <div className={`bg-[#FDFBF7] rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border ${isFullScreen ? 'border-[#D4A24E]/40 my-0' : 'border-stone-300 my-6'} text-stone-800 relative overflow-hidden`}>
+      {/* Header Branding */}
+      <div className="flex items-start justify-between border-b border-stone-200 pb-4 mb-5">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-[#1B4332] text-[#D4A24E] flex items-center justify-center font-black text-xl shadow-xs shrink-0">
+            <Sprout className="w-6 h-6" />
           </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-black text-[#1B4332]">
+                {mode === 'login' && 'Farmer / FPO Secure Login'}
+                {mode === 'signup' && 'Register New Farmer Profile'}
+                {mode === 'forgot_password' && 'Reset Account Password'}
+              </h2>
+              <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full border border-emerald-300 flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3" /> OTP Protected
+              </span>
+            </div>
+            <p className="text-xs text-stone-500 mt-0.5">
+              Direct Farmgate Exchange • Identity & Farm Protection
+            </p>
+          </div>
+        </div>
 
+        {!isFullScreen && onClose && (
           <button
             onClick={onClose}
             className="p-1.5 rounded-xl hover:bg-stone-200 text-stone-400 hover:text-stone-700 transition-colors text-sm font-bold cursor-pointer"
@@ -324,7 +326,8 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
           >
             ✕
           </button>
-        </div>
+        )}
+      </div>
 
         {/* Mode Selector Tabs */}
         <div className="grid grid-cols-2 gap-1.5 bg-stone-200/80 p-1 rounded-2xl mb-5 text-xs font-bold">
@@ -866,6 +869,51 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
           </div>
         )}
       </div>
+  );
+
+  if (isFullScreen) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#143326] via-[#1B4332] to-[#0d2219] flex flex-col items-center justify-center p-4 sm:p-6 text-stone-800 animate-fade-in relative selection:bg-[#D4A24E] selection:text-[#1B4332]">
+        {/* Fullscreen Platform Banner */}
+        <div className="text-center mb-6 max-w-lg">
+          <div className="inline-flex items-center justify-center gap-3 mb-2">
+            <div className="w-12 h-12 rounded-2xl bg-[#D4A24E] text-[#1B4332] flex items-center justify-center font-black text-2xl shadow-md">
+              🌾
+            </div>
+            <div className="text-left">
+              <div className="flex items-center gap-2">
+                <h1 className="font-black text-2xl tracking-tight text-white">KisanDirect</h1>
+                <span className="text-[10px] font-mono font-bold bg-[#24543f] text-[#D4A24E] px-2 py-0.5 rounded border border-[#D4A24E]/40">
+                  Direct Exchange
+                </span>
+              </div>
+              <p className="text-xs text-emerald-200 font-medium">
+                Direct Farm-to-Buyer Marketplace &amp; Smart Logistics
+              </p>
+            </div>
+          </div>
+          <p className="text-xs text-emerald-100/70">
+            Secure login gateway for verified farmers, FPO cooperatives, and agricultural buyers
+          </p>
+        </div>
+
+        {modalContent}
+
+        {/* Security / trust reassurance badges under login card */}
+        <div className="mt-6 text-center text-xs text-emerald-200/70 flex flex-wrap items-center justify-center gap-3 sm:gap-4 font-medium">
+          <span className="flex items-center gap-1">✓ Real-time APMC Mandi Rates</span>
+          <span>•</span>
+          <span className="flex items-center gap-1">✓ Direct UPI &amp; Bank Settlement</span>
+          <span>•</span>
+          <span className="flex items-center gap-1">✓ Zero Intermediary Cut</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-xs overflow-y-auto animate-fade-in">
+      {modalContent}
     </div>
   );
 };

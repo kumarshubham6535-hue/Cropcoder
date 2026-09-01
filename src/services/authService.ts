@@ -145,13 +145,6 @@ export function getActiveAuthSession(): AuthUser | null {
   } catch {
     // ignore
   }
-  // Default to first demo account if session doesn't exist
-  const users = getRegisteredUsers();
-  if (users.length > 0) {
-    const defaultUser = users[0];
-    saveActiveAuthSession(defaultUser);
-    return defaultUser;
-  }
   return null;
 }
 
