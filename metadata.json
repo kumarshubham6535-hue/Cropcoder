@@ -1,6 +1,6 @@
 {
-  "name": "KisanDirect - Direct Farm-to-Buyer Marketplace & Logistics",
-  "description": "Direct digital agricultural marketplace cutting middlemen, with AI demand forecasting and route optimization.",
+  "name": "CropCoder — Direct Farm-to-Buyer Exchange",
+  "description": "CropCoder connects growers, FPOs, and buyers through clearer farmgate pricing, live lots, and trackable delivery routes.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

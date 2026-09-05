@@ -64,7 +64,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
     const newOrder: MarketplaceOrder = {
       id: `ord-${Date.now()}`,
-      orderNumber: `KD-2026-${Math.floor(Math.random() * 90000) + 10000}`,
+      orderNumber: `CC-2026-${Math.floor(Math.random() * 90000) + 10000}`,
       listingId: listing.id,
       cropName: listing.cropName,
       farmerName: listing.farmerName,
@@ -343,7 +343,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <span>₹{logisticsFee.toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between font-black text-stone-900 pt-1 border-t border-amber-200 text-sm">
-                <span>Total Payable on KisanDirect:</span>
+                <span>Total Payable on CropCoder:</span>
                 <span className="text-[#1B4332]">₹{totalAmount.toLocaleString('en-IN')}</span>
               </div>
             </div>

@@ -1,4 +1,4 @@
-// KisanDirect - Direct Farm-to-Buyer Marketplace & Logistics
+// CropCoder - Direct Farm-to-Buyer Exchange & Logistics Network
 // Agricultural Supply Chain & Direct Exchange Platform
 
 export type UserRole = 'farmer' | 'buyer';

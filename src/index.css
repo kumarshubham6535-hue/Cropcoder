@@ -1,90 +1,466 @@
+/* Editorial Fieldwork reminder: warm paper, forest-green trust, field brass value, clay correction; typography is DM Serif Display + Manrope, with asymmetrical editorial rhythm. */
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --forest: #1B4332;
-    --forest-dark: #081C15;
-    --forest-light: #2D6A4F;
-    --wheat: #D4A24E;
-    --wheat-light: #F4E8C1;
-    --sand: #FAF7F0;
-    --charcoal: #2B2B2B;
-    --clay: #8C482A;
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "DM Serif Display", Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --radius-sm: 0.2rem;
+  --radius-md: 0.35rem;
+  --radius-lg: 0.55rem;
+  --radius-xl: 0.75rem;
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
+  --color-card: var(--paper);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--paper);
+  --color-popover-foreground: var(--ink);
+  --color-primary: var(--forest);
+  --color-primary-foreground: var(--paper);
+  --color-secondary: var(--paper-deep);
+  --color-secondary-foreground: var(--forest);
+  --color-muted: var(--paper-deep);
+  --color-muted-foreground: var(--muted-ink);
+  --color-accent: var(--brass);
+  --color-accent-foreground: var(--forest);
+  --color-destructive: var(--clay);
+  --color-destructive-foreground: var(--paper);
+  --color-border: var(--line);
+  --color-input: var(--line);
+  --color-ring: var(--brass);
+}
+
+:root {
+  --paper: #f7f3ea;
+  --paper-deep: #eee8dc;
+  --paper-light: #fffdf8;
+  --ink: #18231d;
+  --muted-ink: #617067;
+  --forest: #123d2d;
+  --forest-dark: #0b241a;
+  --forest-light: #2c6a4e;
+  --brass: #c9923e;
+  --brass-deep: #8f6424;
+  --brass-light: #f1cf8e;
+  --clay: #b86145;
+  --line: #d9d1c2;
+  --shadow-deep: 14px 18px 0 rgba(18, 61, 45, 0.12);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--paper);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button:not(:disabled),
+a[href],
+select:not(:disabled),
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled) {
+  cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--brass) 78%, white);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--brass);
+  color: var(--forest);
+}
+
+.font-display {
+  font-family: "DM Serif Display", Georgia, serif;
+}
+
+.section-kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--brass-deep);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.section-kicker__rule {
+  display: inline-block;
+  width: 2.1rem;
+  height: 1px;
+  background: var(--brass);
+}
+
+.section-kicker--dark {
+  color: var(--brass-light);
+}
+
+.button-primary,
+.button-secondary,
+.button-dark,
+.button-header,
+.icon-button,
+.nav-link,
+.mobile-nav-link,
+.tool-card {
+  transition: transform 160ms var(--ease-out), background-color 180ms var(--ease-out), border-color 180ms var(--ease-out), color 180ms var(--ease-out), box-shadow 180ms var(--ease-out);
+}
+
+.button-primary,
+.button-secondary,
+.button-dark,
+.button-header {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border: 1px solid transparent;
+  padding: 0.8rem 1.05rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.button-primary {
+  background: var(--forest);
+  color: var(--paper);
+  box-shadow: 4px 4px 0 var(--brass);
+}
+
+.button-primary:hover {
+  background: var(--forest-light);
+  box-shadow: 6px 6px 0 var(--brass);
+  transform: translate(-1px, -1px);
+}
+
+.button-secondary {
+  border-color: var(--line);
+  background: transparent;
+  color: var(--forest);
+}
+
+.button-secondary:hover {
+  border-color: var(--forest);
+  background: var(--paper-deep);
+  transform: translateY(-1px);
+}
+
+.button-dark {
+  background: var(--forest);
+  color: var(--paper);
+  box-shadow: 4px 4px 0 rgba(255, 253, 248, 0.55);
+}
+
+.button-dark:hover {
+  background: var(--forest-dark);
+  transform: translate(-1px, -1px);
+}
+
+.button-header {
+  padding: 0.55rem 0.8rem;
+  background: var(--forest);
+  color: var(--paper);
+  font-size: 0.7rem;
+}
+
+.button-header:hover {
+  background: var(--forest-light);
+  transform: translateY(-1px);
+}
+
+.button-primary:active,
+.button-secondary:active,
+.button-dark:active,
+.button-header:active,
+.icon-button:active,
+.nav-link:active,
+.mobile-nav-link:active,
+.tool-card:active {
+  transform: scale(0.97);
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--forest);
+}
+
+.icon-button:hover {
+  border-color: var(--forest);
+  background: var(--paper-deep);
+}
+
+.nav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid transparent;
+  padding: 0.55rem 0.65rem;
+  color: var(--muted-ink);
+  font-size: 0.69rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.nav-link:hover {
+  border-color: var(--line);
+  color: var(--forest);
+}
+
+.nav-link--active {
+  border-color: var(--forest);
+  background: var(--forest);
+  color: var(--paper);
+}
+
+.nav-badge {
+  display: inline-flex;
+  min-width: 1.1rem;
+  align-items: center;
+  justify-content: center;
+  background: var(--brass);
+  color: var(--forest);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.6rem;
+  font-weight: 800;
+  line-height: 1.2;
+  padding: 0.18rem 0.28rem;
+}
+
+.mobile-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid var(--line);
+  background: var(--paper-light);
+  padding: 0.7rem 0.8rem;
+  color: var(--muted-ink);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-align: left;
+}
+
+.mobile-nav-link:hover,
+.mobile-nav-link--active {
+  border-color: var(--forest);
+  background: var(--forest);
+  color: var(--paper);
+}
+
+.status-dot {
+  display: inline-block;
+  width: 0.48rem;
+  height: 0.48rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--brass);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brass) 18%, transparent);
+}
+
+.status-dot--syncing {
+  animation: status-pulse 1.2s ease-in-out infinite;
+}
+
+.status-dot--muted {
+  background: var(--muted-ink);
+  box-shadow: none;
+}
+
+.metric-tile {
+  display: flex;
+  min-height: 4.3rem;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid rgba(255, 253, 248, 0.18);
+  background: rgba(11, 36, 26, 0.62);
+  padding: 0.7rem 0.8rem;
+  backdrop-filter: blur(8px);
+}
+
+.metric-tile__value {
+  color: var(--paper);
+  font-family: "DM Serif Display", Georgia, serif;
+  font-size: 1.65rem;
+  line-height: 1;
+}
+
+.metric-tile__label {
+  margin-top: 0.35rem;
+  color: rgba(247, 243, 234, 0.68);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ledger-stat {
+  display: flex;
+  min-height: 10rem;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+@media (min-width: 1024px) {
+  .ledger-stat {
+    padding: 2.4rem 2.6rem;
   }
 
-  body {
-    font-family: 'Inter', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    background-color: #FAF7F0;
-    color: #2B2B2B;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  h1, h2, h3, .font-heading {
-    font-family: 'Inter', 'Yantramanav', sans-serif;
-    letter-spacing: -0.02em;
-  }
-
-  .font-devanagari {
-    font-family: 'Yantramanav', sans-serif;
+  .ledger-stat:first-child {
+    padding-left: 0;
   }
 }
 
-/* High Density Compact scrollbars */
+.ledger-stat__label {
+  color: var(--muted-ink);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.ledger-stat__value {
+  margin-top: 0.55rem;
+  font-family: "DM Serif Display", Georgia, serif;
+  font-size: clamp(1.85rem, 3vw, 2.65rem);
+  line-height: 1;
+}
+
+.ledger-stat p {
+  max-width: 19rem;
+  margin: 0.75rem 0 0;
+  color: var(--muted-ink);
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.tool-card {
+  display: flex;
+  min-height: 15.5rem;
+  flex-direction: column;
+  align-items: flex-start;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  padding: 1.5rem;
+  text-align: left;
+}
+
+.tool-card:hover {
+  border-color: var(--forest);
+  background: var(--paper-light);
+  box-shadow: 7px 7px 0 color-mix(in srgb, var(--forest) 12%, transparent);
+  transform: translateY(-3px);
+}
+
+.tool-card--brass .tool-card__icon {
+  background: color-mix(in srgb, var(--brass) 18%, var(--paper));
+  color: var(--brass-deep);
+}
+
+.tool-card--forest .tool-card__icon {
+  background: color-mix(in srgb, var(--forest) 12%, var(--paper));
+  color: var(--forest);
+}
+
+.tool-card--clay .tool-card__icon {
+  background: color-mix(in srgb, var(--clay) 15%, var(--paper));
+  color: var(--clay);
+}
+
+.tool-card__icon {
+  display: inline-flex;
+  width: 2.4rem;
+  height: 2.4rem;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.84); }
+}
+
+@keyframes page-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in,
+.animate-page-rise {
+  animation: page-rise 220ms var(--ease-out) both;
+}
+
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 8px;
+  height: 8px;
 }
+
 ::-webkit-scrollbar-track {
-  background: #FAF7F0;
+  background: var(--paper-deep);
 }
+
 ::-webkit-scrollbar-thumb {
-  background: rgba(212, 162, 78, 0.4);
-  border-radius: 2px;
+  background: color-mix(in srgb, var(--forest) 45%, var(--paper));
+  border: 2px solid var(--paper-deep);
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: #1B4332;
+  background: var(--forest);
 }
 
-/* Authentic Agri-Scanner Laser animation */
-@keyframes scan-laser {
-  0% {
-    top: 0%;
-    opacity: 0.9;
-  }
-  50% {
-    top: 96%;
-    opacity: 1;
-  }
-  100% {
-    top: 0%;
-    opacity: 0.9;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
-.animate-scan-laser {
-  animation: scan-laser 2.2s ease-in-out infinite;
-}
-
-@keyframes pulse-subtle {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.65; }
-}
-
-.animate-pulse-subtle {
-  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Print styles for Kisan Prescription Slip */
 @media print {
-  body {
-    background: #FFFFFF !important;
-    color: #000000 !important;
-  }
-  .no-print {
-    display: none !important;
-  }
-  .print-only {
-    display: block !important;
-  }
+  body { background: #fff !important; color: #000 !important; }
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
 }
-

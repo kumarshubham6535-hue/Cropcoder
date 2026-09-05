@@ -31,6 +31,8 @@ export default function App() {
   });
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [isSyncingWithDB, setIsSyncingWithDB] = useState<boolean>(false);
+  const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'signup' | 'forgot_password'>('login');
 
   // Listings state (stored in localStorage with automatic hydration of all state agricultural listings)
   const [listings, setListings] = useState<ProduceListing[]>(() => {
@@ -110,6 +112,10 @@ export default function App() {
   useEffect(() => {
     let isMounted = true;
     async function loadBackendData() {
+      if (!isSupabaseConfigured()) {
+        setIsSyncingWithDB(false);
+        return;
+      }
       setIsSyncingWithDB(true);
       try {
         const [listingsRes, ordersRes] = await Promise.all([
@@ -140,9 +146,15 @@ export default function App() {
 
     loadBackendData();
 
-    // Setup Supabase Realtime Subscription for instant cross-tab & multi-device sync
+    // Setup Supabase Realtime Subscription only when a project is configured.
+    if (!isSupabaseConfigured()) {
+      return () => {
+        isMounted = false;
+      };
+    }
+
     const channel = supabase
-      .channel('kisan-realtime-channel')
+      .channel('cropcoder-realtime-channel')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'produce_listings' },
@@ -293,7 +305,7 @@ export default function App() {
             return {
               ...item,
               quantityAvailableQuintals: restoredQty,
-              status: 'active',
+              status: 'active' as const,
             };
           }
           return item;
@@ -372,6 +384,12 @@ export default function App() {
   const handleLoginSuccess = (user: AuthUser) => {
     saveActiveAuthSession(user);
     setCurrentUser(user);
+    setAuthModalOpen(false);
+  };
+
+  const openAuth = (mode: 'login' | 'signup' | 'forgot_password' = 'login') => {
+    setAuthModalMode(mode);
+    setAuthModalOpen(true);
   };
 
   const handleLogout = () => {
@@ -379,16 +397,6 @@ export default function App() {
     setCurrentUser(null);
     setActiveTab('home');
   };
-
-  // If unauthenticated, show the Login / Signup / OTP Gate as the first screen
-  if (!currentUser) {
-    return (
-      <FarmerAuthModal
-        isFullScreen
-        onSuccess={handleLoginSuccess}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-stone-900 flex flex-col font-sans selection:bg-[#D4A24E] selection:text-[#1B4332]">
@@ -402,6 +410,9 @@ export default function App() {
         ordersCount={orders.filter(o => o.status !== 'cancelled').length}
         currentUser={currentUser}
         onLogout={handleLogout}
+        onAuth={openAuth}
+        isSyncingWithDB={isSyncingWithDB}
+        isSupabaseConfigured={isSupabaseConfigured()}
       />
 
       {/* Main View Router */}
@@ -409,10 +420,12 @@ export default function App() {
         {activeTab === 'home' && (
           <LandingPage
             listings={listings}
+            currentUser={currentUser}
             onSelectTab={(tab) => {
               setActiveTab(tab);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
+            onAuth={openAuth}
           />
         )}
 
@@ -459,6 +472,15 @@ export default function App() {
 
       {/* Footer */}
       <Footer />
+
+      {authModalOpen && (
+        <FarmerAuthModal
+          isOpen={authModalOpen}
+          onClose={() => setAuthModalOpen(false)}
+          onSuccess={handleLoginSuccess}
+          initialMode={authModalMode}
+        />
+      )}
     </div>
   );
 }

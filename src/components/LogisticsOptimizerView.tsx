@@ -93,7 +93,7 @@ export const LogisticsOptimizerView: React.FC<LogisticsOptimizerViewProps> = ({ 
     const liveHub: GeoPoint = {
       id: 'live-hub-central',
       label: 'Hub',
-      name: 'KisanDirect Regional Consolidation & Sorting Hub',
+      name: 'CropCoder Regional Consolidation & Sorting Hub',
       type: 'aggregation_hub',
       lat: livePickups[0]?.lat ? livePickups[0].lat - 0.5 : 19.1235,
       lng: livePickups[0]?.lng ? livePickups[0].lng - 0.2 : 73.9781,

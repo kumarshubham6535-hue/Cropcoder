@@ -487,7 +487,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                       </div>
 
                       <div className="text-right">
-                        <span className="text-emerald-800 font-bold block text-[11px]">KisanDirect Price</span>
+                        <span className="text-emerald-800 font-bold block text-[11px]">CropCoder Price</span>
                         <span className="font-black text-[#1B4332] text-base">
                           ₹{platformPriceKg.toFixed(1)}/kg
                         </span>

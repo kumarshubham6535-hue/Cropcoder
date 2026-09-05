@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+import { isSupabaseConfigured, supabase } from './supabaseClient';
 import { ProduceListing, MarketplaceOrder, FarmerProfile, QualityGrade, OrderStatus } from '../types';
 import { AuthUser, normalizePhone, getCleanDigits } from './authService';
 
@@ -251,6 +251,7 @@ export function mapOrderToDB(order: MarketplaceOrder): Partial<DBMarketplaceOrde
 // ============================================================================
 
 export async function fetchSupabaseProduceListings(): Promise<{ data: ProduceListing[] | null; error: any }> {
+  if (!isSupabaseConfigured()) return { data: null, error: null };
   try {
     const { data, error } = await supabase
       .from('produce_listings')
@@ -274,6 +275,7 @@ export async function fetchSupabaseProduceListings(): Promise<{ data: ProduceLis
 }
 
 export async function createSupabaseProduceListing(listing: ProduceListing): Promise<{ success: boolean; error: any }> {
+  if (!isSupabaseConfigured()) return { success: true, error: null };
   try {
     const payload = mapListingToDB(listing);
     const { error } = await supabase
@@ -292,6 +294,7 @@ export async function createSupabaseProduceListing(listing: ProduceListing): Pro
 }
 
 export async function updateSupabaseProduceListing(id: string, updates: Partial<ProduceListing>): Promise<{ success: boolean; error: any }> {
+  if (!isSupabaseConfigured()) return { success: true, error: null };
   try {
     const dbUpdates: any = {};
     if (updates.quantityAvailableQuintals !== undefined) {
@@ -320,6 +323,7 @@ export async function updateSupabaseProduceListing(id: string, updates: Partial<
 }
 
 export async function decrementSupabaseProduceStock(listingId: string, quantityToDeduct: number): Promise<void> {
+  if (!isSupabaseConfigured()) return;
   try {
     const { data } = await supabase
       .from('produce_listings')
@@ -344,6 +348,7 @@ export async function decrementSupabaseProduceStock(listingId: string, quantityT
 }
 
 export async function restoreSupabaseProduceStock(listingId: string, quantityToRestore: number): Promise<void> {
+  if (!isSupabaseConfigured()) return;
   try {
     const { data } = await supabase
       .from('produce_listings')
@@ -368,6 +373,7 @@ export async function restoreSupabaseProduceStock(listingId: string, quantityToR
 }
 
 export async function deleteSupabaseProduceListing(id: string): Promise<{ success: boolean; error: any }> {
+  if (!isSupabaseConfigured()) return { success: true, error: null };
   try {
     const { error } = await supabase
       .from('produce_listings')
@@ -385,6 +391,7 @@ export async function deleteSupabaseProduceListing(id: string): Promise<{ succes
 // ============================================================================
 
 export async function fetchSupabaseMarketplaceOrders(): Promise<{ data: MarketplaceOrder[] | null; error: any }> {
+  if (!isSupabaseConfigured()) return { data: null, error: null };
   try {
     const { data, error } = await supabase
       .from('marketplace_orders')
@@ -408,6 +415,7 @@ export async function fetchSupabaseMarketplaceOrders(): Promise<{ data: Marketpl
 }
 
 export async function createSupabaseMarketplaceOrder(order: MarketplaceOrder): Promise<{ success: boolean; error: any }> {
+  if (!isSupabaseConfigured()) return { success: true, error: null };
   try {
     const payload = mapOrderToDB(order);
     const { error } = await supabase
@@ -436,6 +444,7 @@ export async function updateSupabaseOrderStatus(
   status: OrderStatus, 
   logisticsStep?: string
 ): Promise<{ success: boolean; error: any }> {
+  if (!isSupabaseConfigured()) return { success: true, error: null };
   try {
     const { error } = await supabase
       .from('marketplace_orders')
@@ -459,6 +468,7 @@ export async function cancelSupabaseOrder(
   targetListingId?: string,
   restoreQty?: number
 ): Promise<{ success: boolean; error: any }> {
+  if (!isSupabaseConfigured()) return { success: true, error: null };
   try {
     const { error } = await supabase
       .from('marketplace_orders')
@@ -484,6 +494,7 @@ export async function cancelSupabaseOrder(
 }
 
 export async function deleteSupabaseOrder(orderId: string): Promise<{ success: boolean; error: any }> {
+  if (!isSupabaseConfigured()) return { success: true, error: null };
   try {
     const { error } = await supabase
       .from('marketplace_orders')
@@ -501,6 +512,7 @@ export async function deleteSupabaseOrder(orderId: string): Promise<{ success: b
 // ============================================================================
 
 export async function fetchSupabaseProfileByPhone(phone: string): Promise<DBProfileRow | null> {
+  if (!isSupabaseConfigured()) return null;
   try {
     const normalized = normalizePhone(phone);
     const cleanDigits = getCleanDigits(phone);
@@ -520,6 +532,7 @@ export async function fetchSupabaseProfileByPhone(phone: string): Promise<DBProf
 }
 
 export async function syncSupabaseProfile(user: AuthUser): Promise<{ success: boolean; error: any }> {
+  if (!isSupabaseConfigured()) return { success: true, error: null };
   try {
     const payload: Partial<DBProfileRow> = {
       id: user.id.startsWith('farmer-') || user.id.startsWith('f-') ? user.id : undefined,
@@ -556,6 +569,7 @@ export async function saveSupabaseOTPChallenge(
   payload?: any,
   expiresAtMs?: number
 ): Promise<{ success: boolean }> {
+  if (!isSupabaseConfigured()) return { success: false };
   try {
     const expiresAt = new Date(expiresAtMs || Date.now() + 5 * 60 * 1000).toISOString();
     await supabase.from('otp_challenges').insert({
@@ -577,6 +591,7 @@ export async function verifySupabaseStoredOTP(
   otpCode: string,
   purpose: string
 ): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
   try {
     const normalized = normalizePhone(phone);
     const { data, error } = await supabase
@@ -612,6 +627,7 @@ export async function verifySupabaseStoredOTP(
 // ============================================================================
 
 export async function fetchSupabaseAPMCBenchmarks(cropId?: string): Promise<DBAPMCBenchmarkRow[]> {
+  if (!isSupabaseConfigured()) return [];
   try {
     let query = supabase.from('apmc_mandi_benchmarks').select('*');
     if (cropId) {

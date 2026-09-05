@@ -1,8 +1,23 @@
+/* Editorial Fieldwork reminder: navigation is a working rail—quiet paper contrast, forest trust, brass action, no opaque status claims. */
 import React from 'react';
-import { Truck, Sprout, ShoppingCart, TrendingUp, Navigation, PackageCheck, LogOut, User } from 'lucide-react';
+import {
+  BarChart3,
+  ChevronDown,
+  Home,
+  LogIn,
+  LogOut,
+  Menu,
+  Navigation,
+  PackageCheck,
+  ShoppingCart,
+  Sprout,
+  X,
+} from 'lucide-react';
 import { AuthUser } from '../services/authService';
 
 export type ActiveTab = 'home' | 'farmer' | 'buyer' | 'forecast' | 'logistics' | 'orders';
+
+type AuthMode = 'login' | 'signup' | 'forgot_password';
 
 interface HeaderProps {
   activeTab: ActiveTab;
@@ -10,209 +25,79 @@ interface HeaderProps {
   ordersCount: number;
   currentUser?: AuthUser | null;
   onLogout?: () => void;
+  onAuth?: (mode?: AuthMode) => void;
+  isSyncingWithDB?: boolean;
+  isSupabaseConfigured?: boolean;
 }
+
+const navigation: Array<{ tab: ActiveTab; label: string; mobileLabel: string; icon: React.ElementType }> = [
+  { tab: 'home', label: 'Overview', mobileLabel: 'Home', icon: Home },
+  { tab: 'farmer', label: 'Farmer / FPO', mobileLabel: 'Farmer', icon: Sprout },
+  { tab: 'buyer', label: 'Marketplace', mobileLabel: 'Buy', icon: ShoppingCart },
+  { tab: 'forecast', label: 'Demand signals', mobileLabel: 'Forecast', icon: BarChart3 },
+  { tab: 'logistics', label: 'Route planner', mobileLabel: 'Routes', icon: Navigation },
+  { tab: 'orders', label: 'Orders', mobileLabel: 'Orders', icon: PackageCheck },
+];
 
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   onSelectTab,
   ordersCount,
   currentUser,
-  onLogout
+  onLogout,
+  onAuth,
+  isSyncingWithDB = false,
+  isSupabaseConfigured = false,
 }) => {
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+
+  const selectTab = (tab: ActiveTab) => {
+    onSelectTab(tab);
+    setMobileOpen(false);
+  };
+
   return (
-    <header className="bg-[#1B4332] text-white border-b border-[#2d5f49] sticky top-0 z-40 shadow-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo & Platform identifier */}
-          <div 
-            onClick={() => onSelectTab('home')}
-            className="flex items-center gap-3 cursor-pointer select-none"
-          >
-            <div className="w-10 h-10 rounded-xl bg-[#D4A24E] text-[#1B4332] flex items-center justify-center font-black text-xl shadow-xs">
-              🌾
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-black text-lg tracking-tight text-white">KisanDirect</span>
-                <span className="text-[10px] font-mono font-semibold bg-[#24543f] text-[#D4A24E] px-2 py-0.5 rounded border border-[#D4A24E]/30">
-                  Direct Exchange
-                </span>
-              </div>
-              <p className="text-[11px] text-emerald-200">
-                Direct Farm-to-Buyer Marketplace & Logistics
-              </p>
-            </div>
-          </div>
+    <header className="sticky top-0 z-40 border-b border-[var(--forest)]/20 bg-[var(--paper)]/95 text-[var(--ink)] shadow-[0_4px_18px_rgba(18,61,45,0.07)] backdrop-blur-md">
+      <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
+        <div className="flex min-h-[76px] items-center justify-between gap-5">
+          <button type="button" onClick={() => selectTab('home')} className="group flex min-w-0 items-center gap-3 text-left" aria-label="CropCoder overview">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center border border-[var(--forest)] bg-[var(--forest)] p-2 shadow-[3px_3px_0_var(--brass)] transition-transform duration-200 group-hover:-translate-y-0.5 text-[var(--brass-light)]">
+              <Sprout className="h-6 w-6 text-[var(--brass)]" strokeWidth={2.2} />
+            </span>
+            <span className="min-w-0">
+              <span className="flex items-center gap-2"><span className="font-display text-2xl leading-none tracking-[-0.03em] text-[var(--forest)]">CropCoder</span><span className="hidden border border-[var(--brass)]/60 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-[var(--brass-deep)] sm:inline">Field exchange</span></span>
+              <span className="mt-1 hidden truncate text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted-ink)] sm:block">Direct farm-to-buyer marketplace</span>
+            </span>
+          </button>
 
-          {/* Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1.5 text-xs font-semibold">
-            <button
-              id="nav-home-btn"
-              onClick={() => onSelectTab('home')}
-              className={`px-3 py-2 rounded-lg transition-colors cursor-pointer ${
-                activeTab === 'home'
-                  ? 'bg-[#285e46] text-white font-bold'
-                  : 'text-emerald-100 hover:bg-[#23523d] hover:text-white'
-              }`}
-            >
-              Overview
-            </button>
-
-            <button
-              id="nav-farmer-btn"
-              onClick={() => onSelectTab('farmer')}
-              className={`px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
-                activeTab === 'farmer'
-                  ? 'bg-[#D4A24E] text-[#1B4332] font-bold shadow-xs'
-                  : 'text-emerald-100 hover:bg-[#23523d] hover:text-white'
-              }`}
-            >
-              <Sprout className="w-3.5 h-3.5" />
-              <span>Farmer / FPO</span>
-            </button>
-
-            <button
-              id="nav-buyer-btn"
-              onClick={() => onSelectTab('buyer')}
-              className={`px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
-                activeTab === 'buyer'
-                  ? 'bg-[#D4A24E] text-[#1B4332] font-bold shadow-xs'
-                  : 'text-emerald-100 hover:bg-[#23523d] hover:text-white'
-              }`}
-            >
-              <ShoppingCart className="w-3.5 h-3.5" />
-              <span>Buyer Marketplace</span>
-            </button>
-
-            <button
-              id="nav-forecast-btn"
-              onClick={() => onSelectTab('forecast')}
-              className={`px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
-                activeTab === 'forecast'
-                  ? 'bg-[#285e46] text-white font-bold'
-                  : 'text-emerald-100 hover:bg-[#23523d] hover:text-white'
-              }`}
-            >
-              <TrendingUp className="w-3.5 h-3.5 text-[#D4A24E]" />
-              <span>AI Demand Forecast</span>
-            </button>
-
-            <button
-              id="nav-logistics-btn"
-              onClick={() => onSelectTab('logistics')}
-              className={`px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
-                activeTab === 'logistics'
-                  ? 'bg-[#285e46] text-white font-bold'
-                  : 'text-emerald-100 hover:bg-[#23523d] hover:text-white'
-              }`}
-            >
-              <Navigation className="w-3.5 h-3.5 text-[#D4A24E]" />
-              <span>AI Route Optimizer</span>
-            </button>
-
-            <button
-              id="nav-orders-btn"
-              onClick={() => onSelectTab('orders')}
-              className={`px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer relative ${
-                activeTab === 'orders'
-                  ? 'bg-[#285e46] text-white font-bold'
-                  : 'text-emerald-100 hover:bg-[#23523d] hover:text-white'
-              }`}
-            >
-              <PackageCheck className="w-3.5 h-3.5" />
-              <span>Orders & Logistics</span>
-              {ordersCount > 0 && (
-                <span className="bg-[#D4A24E] text-[#1B4332] font-black text-[10px] px-1.5 py-0.2 rounded-full">
-                  {ordersCount}
-                </span>
-              )}
-            </button>
-
-            {/* Supabase Realtime Live Indicator */}
-            <div 
-              title="Connected to Supabase PostgreSQL & Realtime Engine"
-              className="ml-2 pl-2 border-l border-[#2d5f49] flex items-center gap-1.5 text-[10px] text-emerald-200 font-mono bg-[#143326]/60 px-2 py-1 rounded-md border border-emerald-500/20"
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-xs shadow-emerald-400"></span>
-              <span className="hidden xl:inline text-emerald-300 font-bold">Supabase</span>
-              <span className="text-[9px] text-emerald-300/80">Live</span>
-            </div>
-
-            {/* User Profile Info & Logout */}
-            {currentUser && onLogout && (
-              <div className="ml-2 pl-2 border-l border-[#2d5f49] flex items-center gap-2">
-                <div className="hidden lg:flex flex-col text-right">
-                  <span className="text-[11px] font-bold text-white leading-tight truncate max-w-[120px]" title={currentUser.name}>
-                    {currentUser.name}
-                  </span>
-                  <span className="text-[9px] text-[#D4A24E] leading-tight font-medium truncate max-w-[120px]">
-                    {currentUser.isFPO ? 'FPO Verified' : currentUser.district ? `${currentUser.district}` : 'Farmer'}
-                  </span>
-                </div>
-                <button
-                  id="header-logout-btn"
-                  onClick={onLogout}
-                  className="px-2.5 py-1.5 rounded-lg bg-rose-950/50 hover:bg-rose-900/80 text-rose-200 hover:text-white border border-rose-500/30 flex items-center gap-1.5 transition-colors cursor-pointer text-xs font-semibold shadow-xs"
-                  title="Sign Out of KisanDirect"
-                >
-                  <LogOut className="w-3.5 h-3.5 text-rose-400" />
-                  <span>Logout</span>
-                </button>
-              </div>
-            )}
+          <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
+            {navigation.map(({ tab, label, icon: Icon }) => {
+              const active = activeTab === tab;
+              return <button key={tab} type="button" onClick={() => selectTab(tab)} className={`nav-link ${active ? 'nav-link--active' : ''}`} aria-current={active ? 'page' : undefined}><Icon className="h-3.5 w-3.5" strokeWidth={1.8} /><span>{label}</span>{tab === 'orders' && ordersCount > 0 && <span className="nav-badge">{ordersCount}</span>}</button>;
+            })}
           </nav>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <div className="hidden items-center gap-2 border-l border-[var(--line)] pl-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted-ink)] xl:flex" title={isSupabaseConfigured ? 'Live data connection configured' : 'Using local workspace data'}>
+              <span className={`status-dot ${isSyncingWithDB ? 'status-dot--syncing' : ''} ${!isSupabaseConfigured ? 'status-dot--muted' : ''}`} aria-hidden="true" />
+              <span>{isSyncingWithDB ? 'Syncing' : isSupabaseConfigured ? 'Live data' : 'Local mode'}</span>
+            </div>
+            {currentUser && onLogout ? (
+              <div className="hidden items-center gap-3 border-l border-[var(--line)] pl-3 md:flex">
+                <div className="max-w-[120px] text-right"><span className="block truncate text-xs font-bold text-[var(--ink)]">{currentUser.name}</span><span className="block truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--brass-deep)]">{currentUser.isFPO ? 'FPO verified' : currentUser.district || 'Farmer'}</span></div>
+                <button type="button" onClick={onLogout} className="icon-button" title="Sign out" aria-label="Sign out"><LogOut className="h-4 w-4" /></button>
+              </div>
+            ) : onAuth ? <button type="button" onClick={() => onAuth('login')} className="button-header"><LogIn className="h-3.5 w-3.5" />Sign in</button> : null}
+            <button type="button" className="icon-button lg:hidden" onClick={() => setMobileOpen((open) => !open)} aria-expanded={mobileOpen} aria-controls="mobile-navigation" aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}>{mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
+          </div>
         </div>
 
-        {/* Mobile Sub-Navigation Bar */}
-        <div className="flex md:hidden items-center justify-around py-2 border-t border-[#2d5f49] text-xs font-semibold overflow-x-auto">
-          <button
-            onClick={() => onSelectTab('home')}
-            className={`px-2.5 py-1.5 rounded-md ${activeTab === 'home' ? 'bg-[#285e46] text-white font-bold' : 'text-emerald-200'}`}
-          >
-            Home
-          </button>
-          <button
-            onClick={() => onSelectTab('farmer')}
-            className={`px-2.5 py-1.5 rounded-md ${activeTab === 'farmer' ? 'bg-[#D4A24E] text-[#1B4332] font-bold' : 'text-emerald-200'}`}
-          >
-            Farmer
-          </button>
-          <button
-            onClick={() => onSelectTab('buyer')}
-            className={`px-2.5 py-1.5 rounded-md ${activeTab === 'buyer' ? 'bg-[#D4A24E] text-[#1B4332] font-bold' : 'text-emerald-200'}`}
-          >
-            Buyer
-          </button>
-          <button
-            onClick={() => onSelectTab('forecast')}
-            className={`px-2.5 py-1.5 rounded-md ${activeTab === 'forecast' ? 'bg-[#285e46] text-white font-bold' : 'text-emerald-200'}`}
-          >
-            Forecast
-          </button>
-          <button
-            onClick={() => onSelectTab('logistics')}
-            className={`px-2.5 py-1.5 rounded-md ${activeTab === 'logistics' ? 'bg-[#285e46] text-white font-bold' : 'text-emerald-200'}`}
-          >
-            Routes
-          </button>
-          <button
-            onClick={() => onSelectTab('orders')}
-            className={`px-2.5 py-1.5 rounded-md ${activeTab === 'orders' ? 'bg-[#285e46] text-white font-bold' : 'text-emerald-200'}`}
-          >
-            Orders ({ordersCount})
-          </button>
-          {currentUser && onLogout && (
-            <button
-              id="mobile-header-logout-btn"
-              onClick={onLogout}
-              className="px-2.5 py-1.5 rounded-md text-rose-300 hover:bg-rose-950/40 flex items-center gap-1 font-semibold"
-              title="Logout"
-            >
-              <LogOut className="w-3.5 h-3.5 text-rose-400" />
-              <span>Logout</span>
-            </button>
-          )}
+        <div className="flex items-center justify-between border-t border-[var(--line)] py-2 lg:hidden">
+          <button type="button" onClick={() => selectTab(activeTab)} className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--muted-ink)]"><span className="status-dot" aria-hidden="true" />{navigation.find((item) => item.tab === activeTab)?.label}</button>
+          <button type="button" onClick={() => setMobileOpen((open) => !open)} className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--forest)]">Navigate <ChevronDown className={`h-3.5 w-3.5 transition-transform ${mobileOpen ? 'rotate-180' : ''}`} /></button>
         </div>
+
+        {mobileOpen && <nav id="mobile-navigation" className="grid grid-cols-2 gap-2 border-t border-[var(--line)] py-3 lg:hidden" aria-label="Mobile navigation">{navigation.map(({ tab, mobileLabel, icon: Icon }) => { const active = activeTab === tab; return <button key={tab} type="button" onClick={() => selectTab(tab)} className={`mobile-nav-link ${active ? 'mobile-nav-link--active' : ''}`}><Icon className="h-4 w-4" /><span>{mobileLabel}</span>{tab === 'orders' && ordersCount > 0 && <span className="nav-badge">{ordersCount}</span>}</button>; })}{currentUser && onLogout ? <button type="button" onClick={onLogout} className="mobile-nav-link text-[var(--clay)]"><LogOut className="h-4 w-4" />Sign out</button> : onAuth ? <button type="button" onClick={() => { onAuth('login'); setMobileOpen(false); }} className="mobile-nav-link text-[var(--forest)]"><LogIn className="h-4 w-4" />Sign in</button> : null}</nav>}
       </div>
     </header>
   );

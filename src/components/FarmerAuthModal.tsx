@@ -285,14 +285,14 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
   };
 
   const cardContent = (
-    <div className={`bg-[#FDFBF7] rounded-2xl max-w-md w-full p-6 sm:p-8 shadow-xl border border-stone-200 text-stone-800 relative ${isFullScreen ? 'my-0' : 'my-6'}`}>
+    <div className={`relative w-full max-w-md border border-[var(--line)] bg-[var(--paper-light)] p-6 text-[var(--ink)] shadow-[12px_14px_0_rgba(18,61,45,0.14)] sm:p-8 ${isFullScreen ? 'my-0' : 'my-6'}`}>
       {/* Header */}
       <div className="text-center mb-6">
-        <div className="w-12 h-12 rounded-xl bg-[#1B4332] text-[#D4A24E] flex items-center justify-center font-black text-xl shadow-xs mx-auto mb-3">
-          <Sprout className="w-6 h-6" />
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center border border-[var(--forest)] bg-[var(--forest)] p-2 shadow-[3px_3px_0_var(--brass)]">
+          <img src="/manus-storage/cropcoder-field-mark_44ede556.png" alt="" className="h-full w-full object-contain" />
         </div>
         <h2 className="text-xl sm:text-2xl font-black text-[#1B4332] tracking-tight">
-          {mode === 'login' && 'Sign In to KisanDirect'}
+          {mode === 'login' && 'Sign in to CropCoder'}
           {mode === 'signup' && 'Create Farmer Profile'}
           {mode === 'forgot_password' && 'Reset Account Password'}
         </h2>
@@ -325,6 +325,13 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
         <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-start gap-2 animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
           <div className="flex-1 font-medium">{successMsg}</div>
+        </div>
+      )}
+
+      {mode === 'login' && (
+        <div className="mb-5 border border-[var(--brass)]/35 bg-[var(--paper-deep)] p-3 text-xs text-[var(--forest)]">
+          <div className="flex items-center gap-2 font-bold"><ShieldCheck className="h-3.5 w-3.5 text-[var(--brass-deep)]" />Evaluation account</div>
+          <p className="mt-1 leading-5 text-[var(--muted-ink)]">Use <span className="font-mono font-bold">9822451203</span> and <span className="font-mono font-bold">Kisan@123</span> to explore the local demo workspace.</p>
         </div>
       )}
 
@@ -820,7 +827,7 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
 
   if (isFullScreen) {
     return (
-      <div className="min-h-screen bg-[#FAF7F0] flex flex-col items-center justify-center p-4 sm:p-6 text-stone-800 animate-fade-in relative selection:bg-[#D4A24E] selection:text-[#1B4332]">
+      <div className="min-h-screen bg-[var(--paper)] flex flex-col items-center justify-center p-4 sm:p-6 text-[var(--ink)] animate-fade-in relative selection:bg-[var(--brass)] selection:text-[var(--forest)]">
         {cardContent}
 
         {/* Small subtle trust indicator below */}
@@ -832,7 +839,7 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs overflow-y-auto animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[var(--forest-dark)]/70 p-4 backdrop-blur-sm animate-fade-in">
       {cardContent}
     </div>
   );

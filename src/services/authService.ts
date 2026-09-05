@@ -1,4 +1,4 @@
-// KisanDirect Secure Authentication & OTP Verification Service
+// CropCoder Secure Authentication & OTP Verification Service
 import { FarmerProfile } from '../types';
 import { 
   syncSupabaseProfile, 
