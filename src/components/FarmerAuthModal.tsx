@@ -288,9 +288,11 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
     <div className={`relative w-full max-w-md border border-[var(--line)] bg-[var(--paper-light)] p-6 text-[var(--ink)] shadow-[12px_14px_0_rgba(18,61,45,0.14)] sm:p-8 ${isFullScreen ? 'my-0' : 'my-6'}`}>
       {/* Header */}
       <div className="text-center mb-6">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center border border-[var(--forest)] bg-[var(--forest)] p-2 shadow-[3px_3px_0_var(--brass)]">
-          <img src="/manus-storage/cropcoder-field-mark_44ede556.png" alt="" className="h-full w-full object-contain" />
-        </div>
+        {!isFullScreen ? (
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center border border-[var(--forest)] bg-[var(--forest)] p-2 shadow-[3px_3px_0_var(--brass)] text-[var(--brass-light)]">
+            <Sprout className="h-6 w-6 text-[var(--brass)]" strokeWidth={2.2} />
+          </div>
+        ) : null}
         <h2 className="text-xl sm:text-2xl font-black text-[#1B4332] tracking-tight">
           {mode === 'login' && 'Sign in to CropCoder'}
           {mode === 'signup' && 'Create Farmer Profile'}
@@ -828,11 +830,27 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
   if (isFullScreen) {
     return (
       <div className="min-h-screen bg-[var(--paper)] flex flex-col items-center justify-center p-4 sm:p-6 text-[var(--ink)] animate-fade-in relative selection:bg-[var(--brass)] selection:text-[var(--forest)]">
+        {/* CropCoder Editorial Branding Header */}
+        <div className="mb-6 flex flex-col items-center text-center">
+          <div className="flex h-12 w-12 items-center justify-center border border-[var(--forest)] bg-[var(--forest)] p-2 shadow-[3px_3px_0_var(--brass)] text-[var(--brass-light)] mb-3">
+            <Sprout className="h-6 w-6 text-[var(--brass)]" strokeWidth={2.2} />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-display text-3xl tracking-[-0.03em] text-[var(--forest)]">CropCoder</span>
+            <span className="border border-[var(--brass)]/60 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--brass-deep)]">
+              Field exchange
+            </span>
+          </div>
+          <p className="mt-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-ink)]">
+            Direct Farm-to-Buyer Marketplace &amp; Exchange
+          </p>
+        </div>
+
         {cardContent}
 
-        {/* Small subtle trust indicator below */}
-        <p className="mt-4 text-center text-xs text-stone-400">
-          Direct Farmgate Exchange • Verified &amp; Encrypted
+        {/* Subtle trust indicator below */}
+        <p className="mt-6 text-center text-xs font-mono text-[var(--muted-ink)] tracking-wide">
+          Direct Farmgate Exchange • Verified &amp; Encrypted • Local-First Security
         </p>
       </div>
     );

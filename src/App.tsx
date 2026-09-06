@@ -398,6 +398,18 @@ export default function App() {
     setActiveTab('home');
   };
 
+  // Auth Gate: Require login before showing anything else
+  if (!currentUser) {
+    return (
+      <FarmerAuthModal
+        isOpen={true}
+        isFullScreen={true}
+        onSuccess={handleLoginSuccess}
+        initialMode={authModalMode}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-stone-900 flex flex-col font-sans selection:bg-[#D4A24E] selection:text-[#1B4332]">
       {/* Top Navigation */}
