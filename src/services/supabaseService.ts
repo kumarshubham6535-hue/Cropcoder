@@ -18,6 +18,7 @@ export interface DBProfileRow {
   primary_crops: string[];
   is_phone_verified: boolean;
   role?: string;
+  password_hash?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -522,7 +523,7 @@ export async function fetchSupabaseProfileByPhone(phone: string): Promise<DBProf
       .select('*')
       .or(`phone.eq.${normalized},phone.ilike.%${cleanDigits}%`)
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (error || !data) return null;
     return data as DBProfileRow;
@@ -546,6 +547,8 @@ export async function syncSupabaseProfile(user: AuthUser): Promise<{ success: bo
       primary_crops: user.primaryCrops,
       is_phone_verified: user.isPhoneVerified,
       role: 'farmer',
+      password_hash: user.passwordHash || 'Kisan@123',
+      updated_at: new Date().toISOString(),
     };
 
     const { error } = await supabase
@@ -555,6 +558,19 @@ export async function syncSupabaseProfile(user: AuthUser): Promise<{ success: bo
     return { success: !error, error };
   } catch (err) {
     return { success: false, error: err };
+  }
+}
+
+export async function recordSupabaseLogin(phone: string): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  try {
+    const normalized = normalizePhone(phone);
+    await supabase
+      .from('profiles')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('phone', normalized);
+  } catch {
+    // ignore
   }
 }
 

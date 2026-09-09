@@ -6,8 +6,11 @@ function normalizeSupabaseUrl(rawUrl?: string): string {
   return url.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
 }
 
-const rawSupabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.SUPABASE_URL;
-const rawSupabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.SUPABASE_PUBLISHABLE_KEY;
+const DEFAULT_SUPABASE_URL = 'https://gzwketwuirwtwrbkhbiz.supabase.co';
+const DEFAULT_SUPABASE_KEY = 'sb_publishable_z19LoBbnWaYw8uJEaBbxPA_V_38ai-k';
+
+const rawSupabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.SUPABASE_URL || DEFAULT_SUPABASE_URL;
+const rawSupabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.SUPABASE_PUBLISHABLE_KEY || DEFAULT_SUPABASE_KEY;
 
 const configuredUrl = normalizeSupabaseUrl(rawSupabaseUrl);
 const configuredKey = (rawSupabaseKey || '').trim();

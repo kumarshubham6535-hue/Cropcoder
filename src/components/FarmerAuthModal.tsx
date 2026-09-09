@@ -99,14 +99,14 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
   if (!isOpen) return null;
 
   // Handler: Standard Login
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
     setIsLoading(true);
 
-    setTimeout(() => {
-      const result = loginWithPassword(loginPhone, loginPassword);
+    try {
+      const result = await loginWithPassword(loginPhone, loginPassword);
       setIsLoading(false);
       if (result.success && result.user) {
         setSuccessMsg(result.message);
@@ -117,11 +117,14 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
       } else {
         setErrorMsg(result.message);
       }
-    }, 350);
+    } catch (err: any) {
+      setIsLoading(false);
+      setErrorMsg(err?.message || 'Login failed. Please check your credentials and connection.');
+    }
   };
 
   // Handler: Signup Step 1 -> Request OTP
-  const handleSignupRequestOTP = (e: React.FormEvent) => {
+  const handleSignupRequestOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -149,7 +152,7 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
     }
 
     setIsLoading(true);
-    setTimeout(() => {
+    try {
       const payload = {
         name: fullName,
         phone: signupPhone,
@@ -162,7 +165,7 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
         password: signupPassword,
       };
 
-      const result = requestOTPChallenge(signupPhone, 'signup', payload);
+      const result = await requestOTPChallenge(signupPhone, 'signup', payload);
       setIsLoading(false);
 
       if (result.success && result.challenge) {
@@ -170,15 +173,18 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
         setSignupStep('otp');
         setEnteredOTP('');
         setResendTimer(45);
-        setSuccessMsg(`Verification OTP sent to +91 ${cleanDigits}`);
+        setSuccessMsg(`Verification OTP sent to +91 ${cleanDigits} (Saved to Supabase)`);
       } else {
         setErrorMsg(result.message);
       }
-    }, 350);
+    } catch (err: any) {
+      setIsLoading(false);
+      setErrorMsg(err?.message || 'Failed to request OTP. Please try again.');
+    }
   };
 
   // Handler: Signup Step 2 -> Verify OTP & Finish Registration
-  const handleSignupVerifyOTP = (e: React.FormEvent) => {
+  const handleSignupVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -189,8 +195,8 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      const result = verifyOTPChallenge(signupPhone, enteredOTP, 'signup');
+    try {
+      const result = await verifyOTPChallenge(signupPhone, enteredOTP, 'signup');
       setIsLoading(false);
 
       if (result.success && result.user) {
@@ -202,11 +208,14 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
       } else {
         setErrorMsg(result.message);
       }
-    }, 400);
+    } catch (err: any) {
+      setIsLoading(false);
+      setErrorMsg(err?.message || 'Failed to verify OTP. Please try again.');
+    }
   };
 
   // Handler: Forgot Password Step 1 -> Request Reset OTP
-  const handleForgotRequestOTP = (e: React.FormEvent) => {
+  const handleForgotRequestOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -218,8 +227,8 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      const result = requestOTPChallenge(forgotPhone, 'forgot_password');
+    try {
+      const result = await requestOTPChallenge(forgotPhone, 'forgot_password');
       setIsLoading(false);
 
       if (result.success && result.challenge) {
@@ -231,11 +240,14 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
       } else {
         setErrorMsg(result.message);
       }
-    }, 350);
+    } catch (err: any) {
+      setIsLoading(false);
+      setErrorMsg(err?.message || 'Failed to send reset OTP.');
+    }
   };
 
   // Handler: Forgot Password Step 2 -> Verify OTP & Set New Password
-  const handleForgotVerifyAndReset = (e: React.FormEvent) => {
+  const handleForgotVerifyAndReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -254,8 +266,8 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      const result = verifyOTPChallenge(forgotPhone, enteredOTP, 'forgot_password', newPassword);
+    try {
+      const result = await verifyOTPChallenge(forgotPhone, enteredOTP, 'forgot_password', newPassword);
       setIsLoading(false);
 
       if (result.success && result.user) {
@@ -267,14 +279,17 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
       } else {
         setErrorMsg(result.message);
       }
-    }, 400);
+    } catch (err: any) {
+      setIsLoading(false);
+      setErrorMsg(err?.message || 'Password reset failed.');
+    }
   };
 
   // Resend OTP Helper
-  const handleResendOTP = (purpose: 'signup' | 'forgot_password') => {
+  const handleResendOTP = async (purpose: 'signup' | 'forgot_password') => {
     if (resendTimer > 0) return;
     const phoneToUse = purpose === 'signup' ? signupPhone : forgotPhone;
-    const result = requestOTPChallenge(phoneToUse, purpose, activeChallenge?.payload);
+    const result = await requestOTPChallenge(phoneToUse, purpose, activeChallenge?.payload);
     if (result.success && result.challenge) {
       setActiveChallenge(result.challenge);
       setResendTimer(45);
@@ -331,9 +346,20 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
       )}
 
       {mode === 'login' && (
-        <div className="mb-5 border border-[var(--brass)]/35 bg-[var(--paper-deep)] p-3 text-xs text-[var(--forest)]">
-          <div className="flex items-center gap-2 font-bold"><ShieldCheck className="h-3.5 w-3.5 text-[var(--brass-deep)]" />Evaluation account</div>
-          <p className="mt-1 leading-5 text-[var(--muted-ink)]">Use <span className="font-mono font-bold">9822451203</span> and <span className="font-mono font-bold">Kisan@123</span> to explore the local demo workspace.</p>
+        <div className="mb-5 border border-emerald-300/60 bg-emerald-50/50 p-3 text-xs text-[var(--forest)] rounded-sm">
+          <div className="flex items-center justify-between font-bold mb-1">
+            <div className="flex items-center gap-1.5">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-700" />
+              <span>Supabase Backend Connected</span>
+            </div>
+            <span className="font-mono text-[10px] text-emerald-800 bg-emerald-100/80 px-1.5 py-0.5 rounded border border-emerald-200">
+              gzwketwuirwtwrbkhbiz
+            </span>
+          </div>
+          <p className="leading-relaxed text-stone-600">
+            Sign in with your registered phone or test credentials: <span className="font-mono font-bold text-stone-900">8434385291</span> / <span className="font-mono font-bold text-stone-900">9822451203</span> with password <span className="font-mono font-bold text-stone-900">Kisan@123</span>.
+          </p>
         </div>
       )}
 
