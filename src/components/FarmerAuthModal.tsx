@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Lock, Smartphone, User, MapPin, Eye, EyeOff, 
   ArrowRight, KeyRound, CheckCircle2, AlertCircle, RefreshCw, 
-  Sprout, Building2, ShieldCheck
+  Sprout, Building2
 } from 'lucide-react';
 import { 
   AuthUser, 
@@ -345,23 +345,7 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
         </div>
       )}
 
-      {mode === 'login' && (
-        <div className="mb-5 border border-emerald-300/60 bg-emerald-50/50 p-3 text-xs text-[var(--forest)] rounded-sm">
-          <div className="flex items-center justify-between font-bold mb-1">
-            <div className="flex items-center gap-1.5">
-              <span className="inline-block w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-700" />
-              <span>Supabase Backend Connected</span>
-            </div>
-            <span className="font-mono text-[10px] text-emerald-800 bg-emerald-100/80 px-1.5 py-0.5 rounded border border-emerald-200">
-              gzwketwuirwtwrbkhbiz
-            </span>
-          </div>
-          <p className="leading-relaxed text-stone-600">
-            Sign in with your registered phone or test credentials: <span className="font-mono font-bold text-stone-900">8434385291</span> / <span className="font-mono font-bold text-stone-900">9822451203</span> with password <span className="font-mono font-bold text-stone-900">Kisan@123</span>.
-          </p>
-        </div>
-      )}
+      
 
       {/* ------------------------------------------------------------- */}
       {/* MODE 1: LOGIN WITH PASSWORD                                    */}
