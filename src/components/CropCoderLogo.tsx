@@ -12,7 +12,7 @@ export const CropCoderLogo: React.FC<CropCoderLogoProps> = ({
   showText = false,
 }) => {
   return (
-    <div className={`inline-flex items-center gap-2.5 ${showText ? '' : ''}`}>
+    <div className="inline-flex items-center gap-2.5">
       <svg
         viewBox="0 0 120 120"
         width={size}
@@ -20,126 +20,239 @@ export const CropCoderLogo: React.FC<CropCoderLogoProps> = ({
         className={className}
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        aria-label="CropCoder Logo"
+        aria-label="KishanDirect KD Monogram Logo"
       >
-        {/* Dark circular emblem background */}
-        <rect width="120" height="120" rx="14" fill="#0C120E" />
+        <defs>
+          <linearGradient id="kdLeafGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#7AA85B" />
+            <stop offset="50%" stopColor="#4E7C38" />
+            <stop offset="100%" stopColor="#23461D" />
+          </linearGradient>
+          <linearGradient id="kdLeafGrad2" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#2B5222" />
+            <stop offset="60%" stopColor="#55863E" />
+            <stop offset="100%" stopColor="#8DBF6D" />
+          </linearGradient>
+          <linearGradient id="kdLeafGrad3" x1="50%" y1="0%" x2="50%" y2="100%">
+            <stop offset="0%" stopColor="#6F9F52" />
+            <stop offset="70%" stopColor="#3D6A2E" />
+            <stop offset="100%" stopColor="#1A3816" />
+          </linearGradient>
+          <linearGradient id="kdVineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#5A8842" />
+            <stop offset="100%" stopColor="#23461E" />
+          </linearGradient>
+          <linearGradient id="kdIvoryGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#FAF6ED" />
+            <stop offset="100%" stopColor="#ECE5D6" />
+          </linearGradient>
+          <filter id="kdVineShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0.8" dy="1.2" stdDeviation="1" floodColor="#000000" floodOpacity="0.45" />
+          </filter>
+        </defs>
 
-        {/* Serif Letter C in warm ivory / off-white */}
-        {/* Top serif flag, outer arc, bottom terminal, inner bowl */}
-        <path
-          d="M 78 29
-             C 77.2 29.5 76 30.2 75.2 31.8
-             L 75 39.5
-             C 74 38.2 71.8 35.2 68 33.2
-             C 63.5 30.8 58 29.8 52 30.8
-             C 41.5 32.5 33.2 41.2 32.2 53.5
-             C 31.2 66.2 38.5 78.5 50.8 82.2
-             C 57.5 84.2 65 83 71.5 79.2
-             C 74.8 77.2 77.2 74.5 78.8 71.2
-             L 74 67.5
-             C 72.8 70.2 70.5 72.5 67.2 74.2
-             C 61.8 77 54.5 77 48.8 73.8
-             C 41.2 69.5 38.5 59.8 40.2 50.8
-             C 41.8 42.5 48.2 36.5 56.5 35.8
-             C 61.2 35.5 66 37.2 69.2 40.2
-             C 70.8 41.8 72 43.5 72.8 45.5
-             L 78 45.5
-             Z"
-          fill="#F5EFEB"
-        />
+        {/* Deep Black Emblem Background */}
+        <rect width="120" height="120" rx="14" fill="#060907" />
 
-        {/* Field Furrows / Plowed soil lines inside C */}
-        {/* Row 1 (top furrow) */}
-        <path
-          d="M 45 66
-             C 53 64.5 64 61.5 74 58.5
-             C 70 61.8 60 65.5 50 68
-             C 47.5 68.5 45.8 67.8 45 66 Z"
-          fill="#449E2A"
-        />
-        {/* Row 2 (middle furrow) */}
-        <path
-          d="M 47 71.5
-             C 54 70 62 67.2 71 63.8
-             C 67 66.8 59 70 51 72.5
-             C 49 73 47.8 72.5 47 71.5 Z"
-          fill="#378720"
-        />
-        {/* Row 3 (bottom furrow) */}
-        <path
-          d="M 51 76.8
-             C 56 75.5 62 73 68 69.5
-             C 64 72 59 74.5 53.5 76.5
-             C 52.2 77 51.5 77 51 76.8 Z"
-          fill="#2A6B17"
-        />
+        {/* Monogram KD Group */}
+        <g id="monogram-kd">
+          {/* Back Leaf Behind K stem */}
+          <g filter="url(#kdVineShadow)">
+            <path
+              d="M 27 50 C 21 46 16 38 18 31 C 24 33 28 40 29 46 Z"
+              fill="url(#kdLeafGrad3)"
+            />
+            <path
+              d="M 18 31 Q 23 40 28 48"
+              stroke="#8BBF6D"
+              strokeWidth="0.75"
+              strokeLinecap="round"
+              opacity="0.8"
+            />
+          </g>
 
-        {/* Central Root/Stem */}
-        <path
-          d="M 47.5 65.5 C 48 62 48.5 58 48.5 55.5"
-          stroke="#449E2A"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        />
+          {/* Vine passing BEHIND K vertical stem */}
+          <path
+            d="M 20 60 C 23 54 28 48 34 46"
+            stroke="url(#kdVineGrad)"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+          />
 
-        {/* Sprout - Left Leaf */}
-        <path
-          d="M 48 57.5
-             C 44 57.5 35.5 53 34 45
-             C 33.2 41 34.5 38 35.2 37
-             C 37.2 40.5 42 45 47.5 48.5
-             C 48 51.5 48 55 48 57.5 Z"
-          fill="#5BBF36"
-        />
+          {/* ================= LETTER K (Ivory Serif) ================= */}
+          <g fill="url(#kdIvoryGrad)">
+            {/* Left Vertical Column of K with classical bracketed top & bottom serifs */}
+            <path d="M 23 35 L 43 35 L 43 38.5 C 40.5 38.8 38.5 40 38.5 43 L 38.5 77 C 38.5 80 40.5 81.2 43 81.5 L 43 85 L 23 85 L 23 81.5 C 25.5 81.2 27.5 80 27.5 77 L 27.5 43 C 27.5 40 25.5 38.8 23 38.5 Z" />
 
-        {/* Sprout - Right Leaf (Main) */}
-        <path
-          d="M 48.5 56
-             C 50 51 55 42 63.5 33.5
-             C 64.5 32.5 65.2 32 65.8 32
-             C 65.8 33.2 64.8 36.5 62.5 41
-             C 59 47.5 53 53.5 48.5 56 Z"
-          fill="#63C73E"
-        />
-        {/* Right leaf lower facet for depth */}
-        <path
-          d="M 48.5 56
-             C 52 53.5 58 48 61 43
-             C 56.5 46.5 51.8 51 48.5 56 Z"
-          fill="#449E2A"
-        />
+            {/* Upper Diagonal Arm of K */}
+            <path d="M 37.5 60.5 L 53 42.5 C 54.5 40.8 54.8 39.5 53.5 38.5 L 50 38.5 L 50 35 L 63 35 L 63 38.5 C 60 38.8 58.5 40 56.5 42 L 43.5 56.5 Z" />
 
-        {/* Code Symbol </ > */}
-        {/* < bracket */}
-        <path
-          d="M 70 41.5 L 65.5 45 L 70 48.5"
-          stroke="#63C73E"
-          strokeWidth="2.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        {/* / slash */}
-        <path
-          d="M 76 39.5 L 71.5 50.5"
-          stroke="#63C73E"
-          strokeWidth="2.8"
-          strokeLinecap="round"
-        />
-        {/* > bracket */}
-        <path
-          d="M 76.5 41.5 L 81 45 L 76.5 48.5"
-          stroke="#63C73E"
-          strokeWidth="2.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
+            {/* Lower Diagonal Leg of K */}
+            <path d="M 41.5 54 L 56.5 75.5 C 59.5 79.8 62.5 81.5 66.5 81.5 L 67.5 81.5 L 67.5 85 C 64.5 85 60.5 84.5 56 80 L 41 58.5 Z" />
+          </g>
+
+          {/* ================= LETTER D (Ivory Serif) ================= */}
+          <g fill="url(#kdIvoryGrad)">
+            <path
+              d="M 54 35 
+                 L 72 35 
+                 C 85 35 94.5 44.5 94.5 60 
+                 C 94.5 75.5 85 85 72 85 
+                 L 54 85 
+                 L 54 81.5 
+                 C 56.5 81.2 58.5 80 58.5 77 
+                 L 58.5 43 
+                 C 58.5 40 56.5 38.8 54 38.5 
+                 Z
+                 M 67.5 42
+                 L 67.5 78
+                 L 71.5 78
+                 C 80 78 86 71 86 60
+                 C 86 49 80 42 71.5 42
+                 Z"
+            />
+          </g>
+
+          {/* ================= BOTANICAL VINES & LEAVES (ENTWINED) ================= */}
+
+          {/* Leaf 1: Top-Left Leaf cluster curling on K's upper left stem */}
+          <g filter="url(#kdVineShadow)">
+            <path
+              d="M 27.5 43 C 21 40 17 48 19 54 C 24 53 28 47 27.5 43 Z"
+              fill="url(#kdLeafGrad1)"
+            />
+            <path
+              d="M 27.5 43 Q 23 48 19 54"
+              stroke="#9ED57E"
+              strokeWidth="0.75"
+              strokeLinecap="round"
+              opacity="0.85"
+            />
+          </g>
+
+          {/* Vine Stem Wrapping ACROSS K's stem to front */}
+          <path
+            d="M 21 54 C 24 53 28 50 33 46 C 36 43 38 41 39 37"
+            stroke="url(#kdVineGrad)"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            filter="url(#kdVineShadow)"
+          />
+
+          {/* Leaf 2: Small leaf pointing upper-right across K's junction */}
+          <g filter="url(#kdVineShadow)">
+            <path
+              d="M 36 44 C 37 36 44 34 46 38 C 44 42 39 44 36 44 Z"
+              fill="url(#kdLeafGrad2)"
+            />
+            <path
+              d="M 36 44 Q 41 39 46 38"
+              stroke="#C0E89E"
+              strokeWidth="0.65"
+              strokeLinecap="round"
+              opacity="0.9"
+            />
+          </g>
+
+          {/* Leaf 3: Leaf cascading down near the K's lower leg and counter */}
+          <g filter="url(#kdVineShadow)">
+            <path
+              d="M 37.5 59 C 32 63 34 72 38 74 C 41 68 40 62 37.5 59 Z"
+              fill="url(#kdLeafGrad1)"
+            />
+            <path
+              d="M 37.5 59 Q 37 66 38 74"
+              stroke="#8BBF6D"
+              strokeWidth="0.75"
+              strokeLinecap="round"
+              opacity="0.8"
+            />
+          </g>
+
+          {/* Vine Stem threading across K leg into D */}
+          <path
+            d="M 37 60 C 42 63 48 67 56 68 C 62 69 66 67 67.5 62"
+            stroke="url(#kdVineGrad)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            filter="url(#kdVineShadow)"
+          />
+
+          {/* Leaf 4: Pointing downward at bottom junction of K and D */}
+          <g filter="url(#kdVineShadow)">
+            <path
+              d="M 46 66 C 45 74 51 78 54 75 C 53 70 49 67 46 66 Z"
+              fill="url(#kdLeafGrad3)"
+            />
+            <path
+              d="M 46 66 Q 49 71 54 75"
+              stroke="#9ED57E"
+              strokeWidth="0.65"
+              strokeLinecap="round"
+              opacity="0.85"
+            />
+          </g>
+
+          {/* Vine looping up through D's inner counter and over the top-right curve */}
+          <path
+            d="M 67.5 62 C 69 54 72 45 77 41 C 82 37 87 40 89 46 C 90 52 87 60 84 68"
+            stroke="url(#kdVineGrad)"
+            strokeWidth="2.3"
+            strokeLinecap="round"
+            filter="url(#kdVineShadow)"
+          />
+
+          {/* Leaf 5: Leaf on top-right curve of D pointing outward */}
+          <g filter="url(#kdVineShadow)">
+            <path
+              d="M 76 41 C 77 34 85 34 87 38 C 84 42 79 43 76 41 Z"
+              fill="url(#kdLeafGrad2)"
+            />
+            <path
+              d="M 76 41 Q 82 37 87 38"
+              stroke="#C4ECA2"
+              strokeWidth="0.75"
+              strokeLinecap="round"
+              opacity="0.9"
+            />
+          </g>
+
+          {/* Leaf 6: Leaf cascading down the outer right curve of D */}
+          <g filter="url(#kdVineShadow)">
+            <path
+              d="M 87 46 C 94 48 97 57 93 63 C 89 59 88 52 87 46 Z"
+              fill="url(#kdLeafGrad1)"
+            />
+            <path
+              d="M 87 46 Q 92 53 93 63"
+              stroke="#A0D781"
+              strokeWidth="0.75"
+              strokeLinecap="round"
+              opacity="0.85"
+            />
+          </g>
+
+          {/* Leaf 7: Terminal leaf hanging gracefully on right side of D */}
+          <g filter="url(#kdVineShadow)">
+            <path
+              d="M 84 67 C 82 74 86 78 88 77 C 88 72 86 68 84 67 Z"
+              fill="url(#kdLeafGrad3)"
+            />
+            <path
+              d="M 84 67 Q 85 72 88 77"
+              stroke="#8BBF6D"
+              strokeWidth="0.6"
+              strokeLinecap="round"
+              opacity="0.8"
+            />
+          </g>
+        </g>
       </svg>
 
       {showText && (
         <span className="flex items-baseline tracking-tight">
-          <span className="font-display text-2xl text-[var(--forest)] font-normal">crop</span>
-          <span className="font-sans text-2xl font-semibold text-[#48A82A] tracking-[-0.02em]">coder</span>
+          <span className="font-display text-2xl text-[var(--forest)] font-normal">Kishan</span>
+          <span className="font-sans text-2xl font-bold text-[#e5a83b] tracking-[-0.02em]">Direct</span>
         </span>
       )}
     </div>

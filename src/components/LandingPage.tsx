@@ -267,7 +267,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             {/* Original subtitle paragraph */}
             <p className="mt-6 max-w-xl text-base leading-7 text-white/85 sm:text-lg">
-              CropCoder brings growers, FPOs, and buyers onto one clear exchange: live farmgate lots, useful price guidance, and a route you can actually follow.
+              KishanDirect brings growers, FPOs, and buyers onto one clear exchange: live farmgate lots, useful price guidance, and a route you can actually follow.
             </p>
 
             {/* Action buttons styled with pill shapes matching screenshot */}
@@ -412,7 +412,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <section className="border-b border-[var(--line)] bg-[var(--paper-deep)]">
         <div className="mx-auto grid max-w-[1440px] gap-0 px-5 sm:px-8 lg:grid-cols-3 lg:px-12">
           <div className="ledger-stat border-b border-[var(--line)] lg:border-b-0 lg:border-r"><span className="ledger-stat__label">The old route</span><strong className="ledger-stat__value text-[var(--clay)]">4–5 layers</strong><p>between the harvest point and the shelf, with little visibility for either side.</p></div>
-          <div className="ledger-stat border-b border-[var(--line)] lg:border-b-0 lg:border-r"><span className="ledger-stat__label">The CropCoder shift</span><strong className="ledger-stat__value text-[var(--forest)]">One clear ledger</strong><p>for source, price, quality, pickup, and delivery milestones in the same workflow.</p></div>
+          <div className="ledger-stat border-b border-[var(--line)] lg:border-b-0 lg:border-r"><span className="ledger-stat__label">The KishanDirect shift</span><strong className="ledger-stat__value text-[var(--forest)]">One clear ledger</strong><p>for source, price, quality, pickup, and delivery milestones in the same workflow.</p></div>
           <div className="ledger-stat"><span className="ledger-stat__label">The working promise</span><strong className="ledger-stat__value text-[var(--brass-deep)]">See. Decide. Move.</strong><p>Useful guidance without pretending a forecast can replace good judgment.</p></div>
         </div>
       </section>

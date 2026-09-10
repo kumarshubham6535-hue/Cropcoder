@@ -54,12 +54,12 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="sticky top-0 z-40 border-b border-[var(--forest)]/20 bg-[var(--paper)]/95 text-[var(--ink)] shadow-[0_4px_18px_rgba(18,61,45,0.07)] backdrop-blur-md">
       <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
         <div className="flex min-h-[76px] items-center justify-between gap-5">
-          <button type="button" onClick={() => selectTab('home')} className="group flex min-w-0 items-center gap-3 text-left" aria-label="CropCoder overview">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden border border-[#16291C] bg-[#0C120E] shadow-[3px_3px_0_var(--brass)] transition-transform duration-200 group-hover:-translate-y-0.5">
+          <button type="button" onClick={() => selectTab('home')} className="group flex min-w-0 items-center gap-3 text-left" aria-label="KishanDirect overview">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-black/40 bg-[#060907] shadow-[2.5px_2.5px_0_var(--brass)] transition-transform duration-200 group-hover:-translate-y-0.5">
               <CropCoderLogo size={44} className="h-full w-full" />
             </span>
             <span className="min-w-0">
-              <span className="font-display text-2xl leading-none tracking-[-0.03em] text-[var(--forest)]">CropCoder</span>
+              <span className="font-display text-2xl leading-none tracking-[-0.03em] text-[var(--forest)]">KishanDirect</span>
             </span>
           </button>
 

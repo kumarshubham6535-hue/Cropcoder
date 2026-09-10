@@ -1,6 +1,6 @@
 {
-  "name": "CropCoder — Direct Farm-to-Buyer Exchange",
-  "description": "CropCoder connects growers, FPOs, and buyers through clearer farmgate pricing, live lots, and trackable delivery routes.",
+  "name": "KishanDirect — Direct Farm-to-Buyer Exchange",
+  "description": "KishanDirect connects growers, FPOs, and buyers through clearer farmgate pricing, live lots, and trackable delivery routes.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
