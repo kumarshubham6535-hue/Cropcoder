@@ -87,17 +87,17 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="sticky top-0 z-40 border-b border-[var(--forest)]/20 bg-[var(--paper)]/95 text-[var(--ink)] shadow-[0_4px_18px_rgba(18,61,45,0.07)] backdrop-blur-md">
       <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
         <div className="flex min-h-[76px] items-center justify-between gap-5">
-          <button type="button" onClick={() => selectTab('home')} className="group flex min-w-0 items-center gap-3 text-left" aria-label="KishanDirect overview">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-black/40 bg-[#060907] shadow-[2.5px_2.5px_0_var(--brass)] transition-transform duration-200 group-hover:-translate-y-0.5">
+          <button type="button" onClick={() => selectTab('home')} className="group flex min-w-0 items-center gap-2 sm:gap-3 text-left" aria-label="KishanDirect overview">
+            <span className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-black/40 bg-[#060907] shadow-[2.5px_2.5px_0_var(--brass)] transition-transform duration-200 group-hover:-translate-y-0.5">
               <CropCoderLogo size={44} className="h-full w-full" />
             </span>
             <span className="min-w-0">
-              <span className="font-display text-2xl leading-none tracking-[-0.03em] text-[var(--forest)]">KishanDirect</span>
+              <span className="font-display text-xl sm:text-2xl leading-none tracking-[-0.03em] text-[var(--forest)]">KishanDirect</span>
             </span>
           </button>
 
-          <nav className="relative hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
-            {navigation.map(({ tab, label }) => {
+          <nav className="relative hidden items-center gap-0.5 md:flex lg:gap-1" aria-label="Primary navigation">
+            {navigation.map(({ tab, label, mobileLabel }) => {
               const active = activeTab === tab;
               return (
                 <button
@@ -105,10 +105,11 @@ export const Header: React.FC<HeaderProps> = ({
                   id={`nav-tab-${tab}`}
                   type="button"
                   onClick={() => selectTab(tab)}
-                  className={`nav-link relative ${active ? 'nav-link--active' : ''}`}
+                  className={`nav-link relative px-2 py-1.5 text-xs lg:px-3 lg:py-2 lg:text-[0.8rem] font-bold ${active ? 'nav-link--active' : ''}`}
                   aria-current={active ? 'page' : undefined}
                 >
-                  <span className="relative z-10">{label}</span>
+                  <span className="relative z-10 hidden xl:inline">{label}</span>
+                  <span className="relative z-10 xl:hidden">{mobileLabel}</span>
                   {tab === 'orders' && ordersCount > 0 && <span className="nav-badge relative z-10">{ordersCount}</span>}
                   {active && (
                     <motion.div
@@ -333,17 +334,27 @@ export const Header: React.FC<HeaderProps> = ({
                 Sign in
               </button>
             ) : null}
-            <button type="button" className="icon-button lg:hidden" onClick={() => setMobileOpen((open) => !open)} aria-expanded={mobileOpen} aria-controls="mobile-navigation" aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}>{mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
+            <button
+              id="header-mobile-menu-toggle"
+              type="button"
+              className="icon-button md:hidden"
+              onClick={() => setMobileOpen((open) => !open)}
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-navigation"
+              aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center justify-between border-t border-[var(--line)] py-2 lg:hidden">
+        <div className="flex items-center justify-between border-t border-[var(--line)] py-2 md:hidden">
           <button type="button" onClick={() => selectTab(activeTab)} className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--muted-ink)]"><span className="status-dot" aria-hidden="true" />{navigation.find((item) => item.tab === activeTab)?.label}</button>
           <button type="button" onClick={() => setMobileOpen((open) => !open)} className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--forest)]">Navigate <ChevronDown className={`h-3.5 w-3.5 transition-transform ${mobileOpen ? 'rotate-180' : ''}`} /></button>
         </div>
 
         {mobileOpen && (
-          <nav id="mobile-navigation" className="grid grid-cols-2 gap-2 border-t border-[var(--line)] py-3 lg:hidden" aria-label="Mobile navigation">
+          <nav id="mobile-navigation" className="grid grid-cols-2 gap-2 border-t border-[var(--line)] py-3 md:hidden" aria-label="Mobile navigation">
             {navigation.map(({ tab, mobileLabel }) => {
               const active = activeTab === tab;
               return (
