@@ -233,22 +233,25 @@ textarea:focus-visible {
   align-items: center;
   gap: 0.4rem;
   border: 1px solid transparent;
-  padding: 0.55rem 0.65rem;
+  padding: 0.65rem 0.85rem;
   color: var(--muted-ink);
-  font-size: 0.69rem;
-  font-weight: 800;
+  font-size: 0.76rem;
+  font-weight: 700;
   white-space: nowrap;
+  background: transparent;
 }
 
 .nav-link:hover {
-  border-color: var(--line);
+  border-color: transparent;
   color: var(--forest);
+  background: transparent;
 }
 
 .nav-link--active {
-  border-color: var(--forest);
-  background: var(--forest);
-  color: var(--paper);
+  border-color: transparent;
+  background: transparent;
+  color: var(--forest);
+  font-weight: 800;
 }
 
 .nav-badge {

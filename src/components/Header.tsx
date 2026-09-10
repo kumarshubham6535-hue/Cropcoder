@@ -1,5 +1,6 @@
 /* Editorial Fieldwork reminder: navigation is a working rail—quiet paper contrast, forest trust, brass action, no opaque status claims. */
 import React from 'react';
+import { motion } from 'motion/react';
 import {
   ChevronDown,
   LogIn,
@@ -62,19 +63,32 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </button>
 
-          <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
+          <nav className="relative hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
             {navigation.map(({ tab, label }) => {
               const active = activeTab === tab;
               return (
                 <button
                   key={tab}
+                  id={`nav-tab-${tab}`}
                   type="button"
                   onClick={() => selectTab(tab)}
-                  className={`nav-link ${active ? 'nav-link--active' : ''}`}
+                  className={`nav-link relative ${active ? 'nav-link--active' : ''}`}
                   aria-current={active ? 'page' : undefined}
                 >
-                  <span>{label}</span>
-                  {tab === 'orders' && ordersCount > 0 && <span className="nav-badge">{ordersCount}</span>}
+                  <span className="relative z-10">{label}</span>
+                  {tab === 'orders' && ordersCount > 0 && <span className="nav-badge relative z-10">{ordersCount}</span>}
+                  {active && (
+                    <motion.div
+                      layoutId="activeNavIndicator"
+                      id="active-nav-indicator"
+                      className="absolute bottom-0 left-2 right-2 h-[3px] rounded-full bg-[var(--forest)]"
+                      transition={{
+                        type: 'spring',
+                        stiffness: 420,
+                        damping: 32,
+                      }}
+                    />
+                  )}
                 </button>
               );
             })}

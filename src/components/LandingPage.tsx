@@ -1,6 +1,7 @@
 /* Editorial Fieldwork reminder: warm paper surfaces, forest-green trust cues, asymmetrical editorial rhythm, explicit status labels, and calm motion. */
 import React from 'react';
 import {
+  ArrowRight,
   ArrowUpRight,
   BarChart3,
   ChevronRight,
@@ -19,7 +20,7 @@ import { ActiveTab } from './Header';
 import { ProduceListing } from '../types';
 import { AuthUser } from '../services/authService';
 
-const HERO_IMAGE = 'https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=1200&q=80';
+const HERO_IMAGE = '/hero-ag.jpg';
 const LOTS_IMAGE = 'https://images.unsplash.com/photo-1615811361523-6bd03d7748e7?auto=format&fit=crop&w=1000&q=80';
 
 interface LandingPageProps {
@@ -52,39 +53,167 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     else onAuth('login');
   };
 
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [customHeroImage, setCustomHeroImage] = React.useState<string | null>(() => {
+    try {
+      return localStorage.getItem('cropcoder_custom_hero_image') || null;
+    } catch {
+      return null;
+    }
+  });
+
+  const heroImageSrc = customHeroImage || '/ag.jpg';
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        if (result) {
+          setCustomHeroImage(result);
+          try {
+            localStorage.setItem('cropcoder_custom_hero_image', result);
+          } catch {
+            // Ignore quota limits
+          }
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        if (result) {
+          setCustomHeroImage(result);
+          try {
+            localStorage.setItem('cropcoder_custom_hero_image', result);
+          } catch {
+            // Ignore quota limits
+          }
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div id="landing-page" className="overflow-hidden">
-      <section className="relative border-b border-[var(--line)] bg-[var(--paper)]">
-        <div className="mx-auto grid max-w-[1440px] gap-10 px-5 pb-16 pt-8 sm:px-8 lg:grid-cols-[minmax(0,0.92fr)_minmax(420px,1.08fr)] lg:gap-14 lg:px-12 lg:pb-24 lg:pt-14">
-          <div className="relative z-10 flex flex-col justify-center lg:pb-4">
-            <div className="section-kicker mb-5"><span className="section-kicker__rule" /><span>FIELD NOTE 01 / DIRECT EXCHANGE</span></div>
-            <p className="mb-4 max-w-xl text-sm font-semibold uppercase tracking-[0.12em] text-[var(--forest)] sm:text-base">The fair route from harvest to home.</p>
-            <h1 className="max-w-3xl font-display text-5xl leading-[0.98] tracking-[-0.045em] text-[var(--ink)] sm:text-6xl lg:text-[5.8rem]">Move produce with <em className="text-[var(--brass)]">proof</em>, not guesswork.</h1>
-            <p className="mt-7 max-w-xl text-base leading-7 text-[var(--muted-ink)] sm:text-lg">CropCoder brings growers, FPOs, and buyers onto one clear exchange: live farmgate lots, useful price guidance, and a route you can actually follow.</p>
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <button type="button" onClick={() => goTo('buyer')} className="button-primary group" id="hero-browse-marketplace-btn"><ShoppingCart className="h-4 w-4" />See today’s harvest<ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /></button>
-              <button type="button" onClick={() => goTo('farmer')} className="button-secondary group" id="hero-list-harvest-btn"><Sprout className="h-4 w-4 text-[var(--brass)]" />List your harvest<ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></button>
-            </div>
-            <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs font-semibold text-[var(--muted-ink)]">
-              <span className="inline-flex items-center gap-2"><span className="status-dot" aria-hidden="true" />{activeListings.length || listings.length} live farmgate lots</span>
-              <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-[var(--forest)]" />OTP-verified accounts</span>
-            </div>
-          </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="hidden"
+        id="hero-bg-file-input"
+      />
+      <section
+        className="relative flex min-h-[580px] items-center overflow-hidden border-b-4 border-[#e5a83b] bg-[#07130c] text-white sm:min-h-[640px] lg:min-h-[720px]"
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={handleDrop}
+      >
+        {/* Full-bleed agricultural hero background photo showing the tractor and crop field at sunset */}
+        <div className="absolute inset-0 z-0 select-none overflow-hidden" aria-hidden="true">
+          <img
+            src={heroImageSrc}
+            alt="Agricultural cultivation field with tractor at sunset"
+            className="h-full w-full object-cover object-[78%_center] sm:object-[72%_center] lg:object-[80%_center] scale-[1.01]"
+            referrerPolicy="no-referrer"
+            loading="eager"
+          />
+          {/* Dark cinematic gradient scrim matching the Ecoland screenshot: deep contrast on left, open view to tractor on right */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#07130c]/95 via-[#07130c]/75 via-45% to-black/20 lg:to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#07130c]/90 via-transparent to-[#07130c]/40" />
+        </div>
 
-          <div className="relative min-h-[430px] overflow-hidden border border-[var(--forest)]/20 bg-[var(--forest)] shadow-[var(--shadow-deep)] sm:min-h-[520px] lg:min-h-[620px]">
-            <img src={HERO_IMAGE} alt="Harvested produce ready for direct collection" className="absolute inset-0 h-full w-full object-cover" loading="eager" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0b241a]/90 via-[#0b241a]/10 to-transparent" />
-            <div className="absolute left-5 top-5 border border-white/35 bg-[#f7f3ea]/90 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--forest)] backdrop-blur-sm sm:left-7 sm:top-7">Verified network / {new Date().getFullYear()}</div>
-            <div className="absolute bottom-5 left-5 right-5 sm:bottom-7 sm:left-7 sm:right-7">
-              <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brass-light)]"><span className="h-px w-8 bg-[var(--brass)]" />Live exchange snapshot</div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                <div className="metric-tile"><span className="metric-tile__value">{activeListings.length || listings.length}</span><span className="metric-tile__label">active lots</span></div>
-                <div className="metric-tile"><span className="metric-tile__value">{distinctStates.size || 1}</span><span className="metric-tile__label">states covered</span></div>
-                <div className="metric-tile col-span-2 sm:col-span-1"><span className="metric-tile__value">{Math.round(totalAvailable || 0)}</span><span className="metric-tile__label">quintals available</span></div>
-              </div>
+        <div className="relative z-10 mx-auto w-full max-w-[1440px] px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
+          <div className="max-w-2xl lg:max-w-3xl">
+            {/* Pill tag matching original CropCoder field note */}
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-black/45 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-emerald-400 backdrop-blur-md">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>FIELD NOTE 01 / DIRECT EXCHANGE</span>
+            </div>
+
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 sm:text-base">
+              The fair route from harvest to home.
+            </p>
+
+            {/* Original headline */}
+            <h1 className="font-display text-5xl font-extrabold leading-[1.02] tracking-[-0.035em] text-white sm:text-6xl lg:text-[5.4rem]">
+              Move produce with <em className="font-normal italic text-[var(--brass-light)]">proof</em>, not guesswork.
+            </h1>
+
+            {/* Original subtitle paragraph */}
+            <p className="mt-6 max-w-xl text-base leading-7 text-white/85 sm:text-lg">
+              CropCoder brings growers, FPOs, and buyers onto one clear exchange: live farmgate lots, useful price guidance, and a route you can actually follow.
+            </p>
+
+            {/* Action buttons styled with pill shapes matching screenshot */}
+            <div className="mt-8 flex flex-col gap-3.5 sm:flex-row sm:items-center">
+              <button
+                type="button"
+                onClick={() => goTo('buyer')}
+                className="group inline-flex items-center justify-center gap-3.5 rounded-full bg-[#1b5e20] hover:bg-[#256c45] px-7 py-3.5 text-sm font-bold text-white shadow-xl shadow-black/40 transition-all hover:shadow-black/60"
+                id="hero-browse-marketplace-btn"
+              >
+                <span>See today’s harvest</span>
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#e5a83b] text-[#07130c] transition-transform group-hover:translate-x-0.5">
+                  <ArrowRight className="h-3.5 w-3.5 stroke-[2.5]" />
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => goTo('farmer')}
+                className="group inline-flex items-center justify-center gap-3.5 rounded-full border-2 border-[#e5a83b] bg-black/30 hover:bg-[#e5a83b]/15 px-7 py-3.5 text-sm font-bold text-[#e5a83b] backdrop-blur-sm transition-all"
+                id="hero-list-harvest-btn"
+              >
+                <span>List your harvest</span>
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#e5a83b] text-[#07130c] transition-transform group-hover:translate-x-0.5">
+                  <ArrowRight className="h-3.5 w-3.5 stroke-[2.5]" />
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                title="Upload custom background image"
+                className="inline-flex items-center justify-center text-xs text-white/60 hover:text-white underline px-3 py-2 cursor-pointer transition-colors sm:self-center"
+              >
+                Change photo
+              </button>
+            </div>
+
+            {/* Live stats and verification badges */}
+            <div className="mt-10 flex flex-wrap items-center gap-3 text-xs font-semibold text-white/90">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/40 px-3.5 py-1.5 backdrop-blur-md">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>{activeListings.length || listings.length} live farmgate lots</span>
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/40 px-3.5 py-1.5 backdrop-blur-md">
+                <span className="h-2 w-2 rounded-full bg-[#e5a83b]" />
+                <span>{distinctStates.size || 1} states covered</span>
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/40 px-3.5 py-1.5 backdrop-blur-md">
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                <span>{Math.round(totalAvailable || 0)} quintals ready</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/40 px-3.5 py-1.5 text-emerald-300 backdrop-blur-md">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>OTP-verified network</span>
+              </span>
             </div>
           </div>
         </div>
+
+        {/* Warm golden bottom border band matching the screenshot */}
+        <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-[#e5a83b] via-[#f5c358] to-[#e5a83b]" />
       </section>
 
       <section className="border-b border-[var(--line)] bg-[var(--paper-deep)]">
