@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Lock, Smartphone, User, MapPin, Eye, EyeOff, 
   ArrowRight, KeyRound, CheckCircle2, AlertCircle, RefreshCw, 
-  Sprout, Building2
+  Sprout, Building2, Mail
 } from 'lucide-react';
 import { 
   AuthUser, 
@@ -35,7 +35,9 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
   const [mode, setMode] = useState<AuthMode>(initialMode);
   
   // Login Form State - Starts empty (no pre-filled demo data)
+  const [loginMethod, setLoginMethod] = useState<'phone' | 'email'>('phone');
   const [loginPhone, setLoginPhone] = useState<string>('');
+  const [loginEmail, setLoginEmail] = useState<string>('');
   const [loginPassword, setLoginPassword] = useState<string>('');
   const [showLoginPassword, setShowLoginPassword] = useState<boolean>(false);
   
@@ -43,6 +45,7 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
   const [signupStep, setSignupStep] = useState<'details' | 'otp'>('details');
   const [fullName, setFullName] = useState<string>('');
   const [signupPhone, setSignupPhone] = useState<string>('');
+  const [signupEmail, setSignupEmail] = useState<string>('');
   const [signupState, setSignupState] = useState<string>('Maharashtra');
   const [signupDistrict, setSignupDistrict] = useState<string>('Nashik');
   const [signupVillage, setSignupVillage] = useState<string>('Lasalgaon');
@@ -103,10 +106,32 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
     e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
+
+    const identifier = loginMethod === 'email' ? loginEmail.trim() : loginPhone.trim();
+
+    if (loginMethod === 'phone') {
+      const cleanDigits = getCleanDigits(loginPhone);
+      if (cleanDigits.length !== 10) {
+        setErrorMsg('Please enter a valid 10-digit mobile number.');
+        return;
+      }
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(identifier)) {
+        setErrorMsg('Please enter a valid email address.');
+        return;
+      }
+    }
+
+    if (!loginPassword || loginPassword.trim() === '') {
+      setErrorMsg('Please enter your account password.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const result = await loginWithPassword(loginPhone, loginPassword);
+      const result = await loginWithPassword(identifier, loginPassword, loginMethod);
       setIsLoading(false);
       if (result.success && result.user) {
         setSuccessMsg(result.message);
@@ -138,6 +163,13 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
       setErrorMsg('Please enter a valid 10-digit mobile phone number.');
       return;
     }
+    if (signupEmail.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(signupEmail.trim())) {
+        setErrorMsg('Please enter a valid email address or leave it blank.');
+        return;
+      }
+    }
     if (!signupPassword || signupPassword.length < 6) {
       setErrorMsg('Password must be at least 6 characters long.');
       return;
@@ -156,6 +188,7 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
       const payload = {
         name: fullName,
         phone: signupPhone,
+        email: signupEmail.trim() || undefined,
         state: signupState,
         district: signupDistrict,
         village: signupVillage,
@@ -220,15 +253,26 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
     setErrorMsg(null);
     setSuccessMsg(null);
 
-    const cleanDigits = getCleanDigits(forgotPhone);
-    if (cleanDigits.length !== 10) {
-      setErrorMsg('Please enter your 10-digit registered mobile number.');
-      return;
+    const rawIdentifier = forgotPhone.trim();
+    const isEmail = rawIdentifier.includes('@');
+
+    if (isEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(rawIdentifier)) {
+        setErrorMsg('Please enter a valid registered email address.');
+        return;
+      }
+    } else {
+      const cleanDigits = getCleanDigits(rawIdentifier);
+      if (cleanDigits.length !== 10) {
+        setErrorMsg('Please enter your 10-digit registered mobile number or email.');
+        return;
+      }
     }
 
     setIsLoading(true);
     try {
-      const result = await requestOTPChallenge(forgotPhone, 'forgot_password');
+      const result = await requestOTPChallenge(rawIdentifier, 'forgot_password');
       setIsLoading(false);
 
       if (result.success && result.challenge) {
@@ -236,7 +280,7 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
         setForgotStep('otp_reset');
         setEnteredOTP('');
         setResendTimer(45);
-        setSuccessMsg(`Password Reset OTP sent to ${result.challenge.phone}`);
+        setSuccessMsg(result.message || `Password Reset OTP sent to ${result.challenge.phone}`);
       } else {
         setErrorMsg(result.message);
       }
@@ -267,7 +311,7 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
 
     setIsLoading(true);
     try {
-      const result = await verifyOTPChallenge(forgotPhone, enteredOTP, 'forgot_password', newPassword);
+      const result = await verifyOTPChallenge(forgotPhone.trim(), enteredOTP, 'forgot_password', newPassword);
       setIsLoading(false);
 
       if (result.success && result.user) {
@@ -352,25 +396,84 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
       {/* ------------------------------------------------------------- */}
       {mode === 'login' && (
         <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
-          <div>
-            <label className="block font-bold text-stone-700 mb-1">
-              Mobile Phone Number
-            </label>
-            <div className="relative">
-              <span className="absolute left-3.5 top-2.5 text-stone-400 font-bold text-xs">+91</span>
-              <input
-                id="farmer-login-phone-input"
-                type="tel"
-                maxLength={10}
-                value={loginPhone}
-                onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, ''))}
-                placeholder="Enter 10-digit mobile"
-                className="w-full pl-12 pr-3 py-2.5 bg-white border border-stone-300 rounded-xl font-medium text-stone-900 focus:outline-emerald-700"
-                required
-                autoFocus
-              />
-            </div>
+          {/* Segmented Toggle: Phone Number vs Email ID */}
+          <div className="flex p-1 bg-stone-100 rounded-xl border border-stone-200">
+            <button
+              id="login-method-phone-tab"
+              type="button"
+              onClick={() => {
+                setLoginMethod('phone');
+                setErrorMsg(null);
+              }}
+              className={`flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                loginMethod === 'phone'
+                  ? 'bg-white text-[#1B4332] shadow-xs border border-stone-200/80 font-extrabold'
+                  : 'text-stone-500 hover:text-stone-800'
+              }`}
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>Phone Number</span>
+            </button>
+            <button
+              id="login-method-email-tab"
+              type="button"
+              onClick={() => {
+                setLoginMethod('email');
+                setErrorMsg(null);
+              }}
+              className={`flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                loginMethod === 'email'
+                  ? 'bg-white text-[#1B4332] shadow-xs border border-stone-200/80 font-extrabold'
+                  : 'text-stone-500 hover:text-stone-800'
+              }`}
+            >
+              <Mail className="w-3.5 h-3.5" />
+              <span>Email ID</span>
+            </button>
           </div>
+
+          {loginMethod === 'phone' ? (
+            <div>
+              <label htmlFor="farmer-login-phone-input" className="block font-bold text-stone-700 mb-1">
+                Mobile Phone Number
+              </label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-2.5 text-stone-400 font-bold text-xs">+91</span>
+                <input
+                  id="farmer-login-phone-input"
+                  type="tel"
+                  maxLength={10}
+                  value={loginPhone}
+                  onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, ''))}
+                  placeholder="Enter 10-digit mobile"
+                  className="w-full pl-12 pr-3 py-2.5 bg-white border border-stone-300 rounded-xl font-medium text-stone-900 focus:outline-emerald-700"
+                  required
+                  autoFocus
+                />
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label htmlFor="farmer-login-email-input" className="block font-bold text-stone-700 mb-1">
+                Email ID
+              </label>
+              <div className="relative">
+                <div className="absolute left-3.5 top-2.5 text-stone-400">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <input
+                  id="farmer-login-email-input"
+                  type="email"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="w-full pl-10 pr-3 py-2.5 bg-white border border-stone-300 rounded-xl font-medium text-stone-900 focus:outline-emerald-700"
+                  required
+                  autoFocus
+                />
+              </div>
+            </div>
+          )}
 
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -380,7 +483,7 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
                 onClick={() => {
                   setMode('forgot_password');
                   setForgotStep('phone');
-                  setForgotPhone(loginPhone);
+                  setForgotPhone(loginMethod === 'email' ? loginEmail : loginPhone);
                   setErrorMsg(null);
                   setSuccessMsg(null);
                 }}
@@ -473,6 +576,25 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
                     placeholder="10-digit mobile"
                     className="w-full pl-12 pr-3 py-2.5 bg-white border border-stone-300 rounded-xl font-medium"
                     required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-stone-700 mb-1">
+                  Email Address <span className="text-stone-400 font-normal">(Optional)</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-2.5 text-stone-400">
+                    <Mail className="w-4 h-4" />
+                  </span>
+                  <input
+                    id="farmer-signup-email-input"
+                    type="email"
+                    value={signupEmail}
+                    onChange={(e) => setSignupEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full pl-10 pr-3 py-2.5 bg-white border border-stone-300 rounded-xl font-medium"
                   />
                 </div>
               </div>
@@ -709,16 +831,24 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
           {forgotStep === 'phone' ? (
             <form onSubmit={handleForgotRequestOTP} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-stone-700 mb-1">Registered Mobile Number</label>
+                <label className="block font-bold text-stone-700 mb-1">
+                  {forgotPhone.includes('@') ? 'Registered Email Address' : 'Registered Mobile Number or Email'}
+                </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-2.5 text-stone-400 font-bold text-xs">+91</span>
+                  {forgotPhone.includes('@') ? (
+                    <span className="absolute left-3.5 top-2.5 text-stone-400">
+                      <Mail className="w-4 h-4" />
+                    </span>
+                  ) : (
+                    <span className="absolute left-3.5 top-2.5 text-stone-400 font-bold text-xs">+91</span>
+                  )}
                   <input
-                    type="tel"
-                    maxLength={10}
+                    id="forgot-identifier-input"
+                    type={forgotPhone.includes('@') ? 'email' : 'text'}
                     value={forgotPhone}
-                    onChange={(e) => setForgotPhone(e.target.value.replace(/\D/g, ''))}
-                    placeholder="10-digit mobile"
-                    className="w-full pl-12 pr-3 py-2.5 bg-white border border-stone-300 rounded-xl font-medium"
+                    onChange={(e) => setForgotPhone(e.target.value)}
+                    placeholder={forgotPhone.includes('@') ? 'you@example.com' : '10-digit mobile or email'}
+                    className={`w-full ${forgotPhone.includes('@') ? 'pl-10' : 'pl-12'} pr-3 py-2.5 bg-white border border-stone-300 rounded-xl font-medium`}
                     required
                     autoFocus
                   />

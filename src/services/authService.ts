@@ -5,11 +5,13 @@ import {
   saveSupabaseOTPChallenge, 
   verifySupabaseStoredOTP,
   fetchSupabaseProfileByPhone,
+  fetchSupabaseProfileByEmail,
   recordSupabaseLogin
 } from './supabaseService';
 import { isSupabaseConfigured, supabase } from './supabaseClient';
 
 export interface AuthUser extends FarmerProfile {
+  email?: string;
   passwordHash: string;
   isPhoneVerified: boolean;
   registeredAt: string;
@@ -36,6 +38,7 @@ export const DEFAULT_DEMO_USERS: AuthUser[] = [
     id: 'f-101',
     name: 'Rameshwar Patil',
     phone: '+91 98224 51203',
+    email: 'rameshwar@patilfarms.in',
     isFPO: true,
     fpoName: 'Godavari Sahyadri Farmer Producer Co.',
     state: 'Maharashtra',
@@ -52,6 +55,7 @@ export const DEFAULT_DEMO_USERS: AuthUser[] = [
     id: 'f-102',
     name: 'Baldev Singh Dhillon',
     phone: '+91 98141 87211',
+    email: 'baldev@dhillonfarms.in',
     isFPO: false,
     state: 'Uttar Pradesh',
     district: 'Agra',
@@ -67,6 +71,7 @@ export const DEFAULT_DEMO_USERS: AuthUser[] = [
     id: 'f-103',
     name: 'Venkateshwarlu Reddy',
     phone: '+91 94401 29845',
+    email: 'venkat@reddyagro.in',
     isFPO: true,
     fpoName: 'Andhra Spice & Horticulture Federation',
     state: 'Karnataka',
@@ -109,6 +114,20 @@ export function getRegisteredUsers(): AuthUser[] {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        // Upgrade legacy cached records to include default demo emails
+        let upgraded = false;
+        for (const user of parsed) {
+          if (!user.email) {
+            const demo = DEFAULT_DEMO_USERS.find(d => getCleanDigits(d.phone) === getCleanDigits(user.phone));
+            if (demo?.email) {
+              user.email = demo.email;
+              upgraded = true;
+            }
+          }
+        }
+        if (upgraded) {
+          saveRegisteredUsers(parsed);
+        }
         return parsed;
       }
     }
@@ -170,66 +189,125 @@ export function generateRandomOTP(): string {
 
 // Request OTP challenge
 export async function requestOTPChallenge(
-  rawPhone: string,
+  rawIdentifier: string,
   purpose: 'signup' | 'forgot_password' | 'profile_update',
   payload?: any
 ): Promise<{ success: boolean; message: string; challenge?: OTPChallenge }> {
-  const cleanDigits = getCleanDigits(rawPhone);
-  if (cleanDigits.length !== 10) {
-    return { success: false, message: 'Please enter a valid 10-digit mobile phone number.' };
-  }
-
-  const normalized = normalizePhone(rawPhone);
+  const isEmail = rawIdentifier.includes('@');
   const users = getRegisteredUsers();
-  let existingUser = users.find(u => getCleanDigits(u.phone) === cleanDigits);
+  let existingUser: AuthUser | undefined;
+  let normalized = rawIdentifier.trim();
+  let targetPhone = rawIdentifier.trim();
 
-  // Check Supabase profiles table
-  try {
-    const remoteProfile = await fetchSupabaseProfileByPhone(rawPhone);
-    if (remoteProfile) {
-      existingUser = {
-        id: remoteProfile.id,
-        name: remoteProfile.name,
-        phone: remoteProfile.phone,
-        isFPO: Boolean(remoteProfile.is_fpo),
-        fpoName: remoteProfile.fpo_name || undefined,
-        state: remoteProfile.state,
-        district: remoteProfile.district,
-        village: remoteProfile.village,
-        primaryCrops: remoteProfile.primary_crops || [],
-        passwordHash: remoteProfile.password_hash || 'Kisan@123',
-        isPhoneVerified: remoteProfile.is_phone_verified,
-        registeredAt: remoteProfile.created_at || new Date().toISOString(),
-        lastLoginAt: new Date().toISOString(),
-        twoFactorEnabled: true,
+  if (isEmail) {
+    const cleanEmail = rawIdentifier.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      return { success: false, message: 'Please enter a valid email address.' };
+    }
+
+    normalized = cleanEmail;
+    existingUser = users.find(u => u.email?.toLowerCase() === cleanEmail);
+
+    try {
+      const remoteProfile = await fetchSupabaseProfileByEmail(cleanEmail);
+      if (remoteProfile) {
+        existingUser = {
+          id: remoteProfile.id,
+          name: remoteProfile.name,
+          phone: remoteProfile.phone,
+          email: remoteProfile.email || cleanEmail,
+          isFPO: Boolean(remoteProfile.is_fpo),
+          fpoName: remoteProfile.fpo_name || undefined,
+          state: remoteProfile.state,
+          district: remoteProfile.district,
+          village: remoteProfile.village,
+          primaryCrops: remoteProfile.primary_crops || [],
+          passwordHash: remoteProfile.password_hash || 'Kisan@123',
+          isPhoneVerified: remoteProfile.is_phone_verified,
+          registeredAt: remoteProfile.created_at || new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
+          twoFactorEnabled: true,
+        };
+      }
+    } catch (err) {
+      console.warn('Supabase remote profile check notice:', err);
+    }
+
+    if (purpose === 'signup' && existingUser) {
+      return {
+        success: false,
+        message: `An account with email ${cleanEmail} already exists in database. Please log in or use Forgot Password.`,
       };
     }
-  } catch (err) {
-    console.warn('Supabase remote profile check notice:', err);
-  }
 
-  if (purpose === 'signup' && existingUser) {
-    return {
-      success: false,
-      message: `An account with phone ${normalized} already exists in database. Please log in or use Forgot Password.`,
-    };
-  }
+    if (purpose === 'forgot_password' && !existingUser) {
+      return {
+        success: false,
+        message: `No farmer account found for email ${cleanEmail}. Please check or sign up first.`,
+      };
+    }
 
-  if (purpose === 'forgot_password' && !existingUser) {
-    return {
-      success: false,
-      message: `No farmer account found for phone number ${normalized}. Please check or sign up first.`,
-    };
+    targetPhone = existingUser?.phone || rawIdentifier;
+  } else {
+    const cleanDigits = getCleanDigits(rawIdentifier);
+    if (cleanDigits.length !== 10) {
+      return { success: false, message: 'Please enter a valid 10-digit mobile phone number.' };
+    }
+
+    normalized = normalizePhone(rawIdentifier);
+    targetPhone = normalized;
+    existingUser = users.find(u => getCleanDigits(u.phone) === cleanDigits);
+
+    // Check Supabase profiles table
+    try {
+      const remoteProfile = await fetchSupabaseProfileByPhone(rawIdentifier);
+      if (remoteProfile) {
+        existingUser = {
+          id: remoteProfile.id,
+          name: remoteProfile.name,
+          phone: remoteProfile.phone,
+          email: remoteProfile.email || undefined,
+          isFPO: Boolean(remoteProfile.is_fpo),
+          fpoName: remoteProfile.fpo_name || undefined,
+          state: remoteProfile.state,
+          district: remoteProfile.district,
+          village: remoteProfile.village,
+          primaryCrops: remoteProfile.primary_crops || [],
+          passwordHash: remoteProfile.password_hash || 'Kisan@123',
+          isPhoneVerified: remoteProfile.is_phone_verified,
+          registeredAt: remoteProfile.created_at || new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
+          twoFactorEnabled: true,
+        };
+      }
+    } catch (err) {
+      console.warn('Supabase remote profile check notice:', err);
+    }
+
+    if (purpose === 'signup' && existingUser) {
+      return {
+        success: false,
+        message: `An account with phone ${normalized} already exists in database. Please log in or use Forgot Password.`,
+      };
+    }
+
+    if (purpose === 'forgot_password' && !existingUser) {
+      return {
+        success: false,
+        message: `No farmer account found for phone number ${normalized}. Please check or sign up first.`,
+      };
+    }
   }
 
   const otpCode = generateRandomOTP();
   const challenge: OTPChallenge = {
-    phone: normalized,
+    phone: targetPhone,
     otpCode: otpCode,
     purpose: purpose,
     createdAt: Date.now(),
     expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes validity
-    payload: payload,
+    payload: { ...(payload || {}), identifier: normalized },
   };
 
   try {
@@ -239,11 +317,15 @@ export async function requestOTPChallenge(
   }
 
   // Asynchronously record OTP challenge in Supabase otp_challenges table
-  await saveSupabaseOTPChallenge(normalized, otpCode, purpose, payload, challenge.expiresAt).catch(() => {});
+  await saveSupabaseOTPChallenge(targetPhone, otpCode, purpose, challenge.payload, challenge.expiresAt).catch(() => {});
+
+  const destinationDesc = isEmail && existingUser
+    ? `registered mobile (${existingUser.phone})`
+    : normalized;
 
   return {
     success: true,
-    message: `Security OTP sent to ${normalized}.`,
+    message: `Security OTP sent to ${destinationDesc}.`,
     challenge: challenge,
   };
 }
@@ -275,12 +357,11 @@ export function clearActiveOTPChallenge(): void {
 
 // Verify OTP and complete action
 export async function verifyOTPChallenge(
-  rawPhone: string,
+  rawIdentifier: string,
   enteredOTP: string,
   purpose: 'signup' | 'forgot_password' | 'profile_update',
   newPasswordForReset?: string
 ): Promise<{ success: boolean; message: string; user?: AuthUser }> {
-  const cleanDigits = getCleanDigits(rawPhone);
   const challenge = getActiveOTPChallenge();
 
   if (!challenge) {
@@ -290,10 +371,18 @@ export async function verifyOTPChallenge(
     };
   }
 
-  if (getCleanDigits(challenge.phone) !== cleanDigits || challenge.purpose !== purpose) {
+  const isEmail = rawIdentifier.includes('@');
+  const cleanDigits = isEmail ? '' : getCleanDigits(rawIdentifier);
+  const cleanEmail = isEmail ? rawIdentifier.trim().toLowerCase() : '';
+
+  const matchesIdentifier = isEmail
+    ? (challenge.payload?.identifier === cleanEmail || challenge.payload?.email === cleanEmail || challenge.phone === rawIdentifier)
+    : (getCleanDigits(challenge.phone) === cleanDigits || challenge.payload?.phone === rawIdentifier || challenge.payload?.identifier === normalizePhone(rawIdentifier));
+
+  if (!matchesIdentifier || challenge.purpose !== purpose) {
     return {
       success: false,
-      message: 'OTP mismatch. Please request a fresh OTP for your phone number.',
+      message: 'OTP mismatch. Please request a fresh OTP for your account.',
     };
   }
 
@@ -310,10 +399,10 @@ export async function verifyOTPChallenge(
       return { success: false, message: 'Signup registration data missing. Please fill the form again.' };
     }
 
-    const { name, phone, state, district, village, isFPO, fpoName, primaryCrops, password } = challenge.payload;
+    const { name, phone, email, state, district, village, isFPO, fpoName, primaryCrops, password } = challenge.payload;
     const users = getRegisteredUsers();
 
-    // Double check duplicate
+    // Double check duplicate phone
     if (users.some(u => getCleanDigits(u.phone) === getCleanDigits(phone))) {
       return { success: false, message: 'An account with this phone already exists.' };
     }
@@ -322,6 +411,7 @@ export async function verifyOTPChallenge(
       id: `farmer-${Date.now()}`,
       name: name.trim(),
       phone: normalizePhone(phone),
+      email: email ? email.trim().toLowerCase() : undefined,
       state: state.trim(),
       district: district.trim(),
       village: village.trim(),
@@ -335,7 +425,7 @@ export async function verifyOTPChallenge(
       twoFactorEnabled: true,
     };
 
-    const existingIdx = users.findIndex(u => getCleanDigits(u.phone) === cleanDigits);
+    const existingIdx = users.findIndex(u => getCleanDigits(u.phone) === getCleanDigits(phone));
     if (existingIdx >= 0) {
       users[existingIdx] = newUser;
     } else {
@@ -365,9 +455,10 @@ export async function verifyOTPChallenge(
       return { success: false, message: 'New password must be at least 6 characters long.' };
     }
 
-    const normalized = normalizePhone(rawPhone);
     const users = getRegisteredUsers();
-    const userIndex = users.findIndex(u => getCleanDigits(u.phone) === cleanDigits);
+    const userIndex = isEmail
+      ? users.findIndex(u => u.email?.toLowerCase() === cleanEmail)
+      : users.findIndex(u => getCleanDigits(u.phone) === cleanDigits);
 
     let updatedUser: AuthUser | null = null;
     if (userIndex !== -1) {
@@ -382,21 +473,30 @@ export async function verifyOTPChallenge(
     // Update in Supabase backend profiles table
     try {
       if (isSupabaseConfigured()) {
-        await supabase
+        const query = supabase
           .from('profiles')
           .update({
             password_hash: newPasswordForReset,
             updated_at: new Date().toISOString(),
-          })
-          .eq('phone', normalized);
+          });
+
+        if (isEmail) {
+          await query.ilike('email', cleanEmail);
+        } else {
+          await query.eq('phone', normalizePhone(rawIdentifier));
+        }
 
         if (!updatedUser) {
-          const remoteProfile = await fetchSupabaseProfileByPhone(rawPhone);
+          const remoteProfile = isEmail
+            ? await fetchSupabaseProfileByEmail(cleanEmail)
+            : await fetchSupabaseProfileByPhone(rawIdentifier);
+
           if (remoteProfile) {
             updatedUser = {
               id: remoteProfile.id,
               name: remoteProfile.name,
               phone: remoteProfile.phone,
+              email: remoteProfile.email || undefined,
               isFPO: Boolean(remoteProfile.is_fpo),
               fpoName: remoteProfile.fpo_name || undefined,
               state: remoteProfile.state,
@@ -433,25 +533,130 @@ export async function verifyOTPChallenge(
   return { success: false, message: 'Unknown OTP verification purpose.' };
 }
 
-// Standard Secure Login with Phone & Password (Connected to Supabase Profiles Table)
+// Standard Secure Login with Phone OR Email & Password (Connected to Supabase Profiles Table)
 export async function loginWithPassword(
-  rawPhone: string,
-  enteredPassword: string
+  identifier: string,
+  enteredPassword: string,
+  loginMethod: 'phone' | 'email' = 'phone'
 ): Promise<{ success: boolean; message: string; user?: AuthUser }> {
-  const cleanDigits = getCleanDigits(rawPhone);
-  if (cleanDigits.length !== 10) {
-    return { success: false, message: 'Please enter a valid 10-digit mobile number.' };
-  }
+  const isEmail = loginMethod === 'email' || identifier.includes('@');
 
   if (!enteredPassword || enteredPassword.trim() === '') {
     return { success: false, message: 'Please enter your account password.' };
   }
 
-  const normalized = normalizePhone(rawPhone);
+  // Branch 1: Email Login
+  if (isEmail) {
+    const cleanEmail = identifier.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      return { success: false, message: 'Please enter a valid email address.' };
+    }
+
+    // 1. Primary check: Query Supabase backend profiles table by email
+    try {
+      const remoteProfile = await fetchSupabaseProfileByEmail(cleanEmail);
+      if (remoteProfile) {
+        const expectedPassword = remoteProfile.password_hash || 'Kisan@123';
+        if (expectedPassword !== enteredPassword) {
+          return {
+            success: false,
+            message: 'Incorrect password entered. Click "Forgot Password?" to reset your password.',
+          };
+        }
+
+        const remoteUser: AuthUser = {
+          id: remoteProfile.id,
+          name: remoteProfile.name,
+          phone: remoteProfile.phone,
+          email: remoteProfile.email || cleanEmail,
+          isFPO: Boolean(remoteProfile.is_fpo),
+          fpoName: remoteProfile.fpo_name || undefined,
+          state: remoteProfile.state,
+          district: remoteProfile.district,
+          village: remoteProfile.village,
+          primaryCrops: remoteProfile.primary_crops && remoteProfile.primary_crops.length > 0 ? remoteProfile.primary_crops : ['General Produce'],
+          passwordHash: expectedPassword,
+          isPhoneVerified: remoteProfile.is_phone_verified,
+          registeredAt: remoteProfile.created_at || new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
+          twoFactorEnabled: true,
+        };
+
+        // Record login event timestamp in Supabase
+        await recordSupabaseLogin(cleanEmail);
+
+        // Cache locally
+        const users = getRegisteredUsers();
+        const existingIdx = users.findIndex(
+          u => (u.email && u.email.toLowerCase() === cleanEmail) || getCleanDigits(u.phone) === getCleanDigits(remoteProfile.phone)
+        );
+        if (existingIdx >= 0) {
+          users[existingIdx] = remoteUser;
+        } else {
+          users.push(remoteUser);
+        }
+        saveRegisteredUsers(users);
+        saveActiveAuthSession(remoteUser);
+
+        return {
+          success: true,
+          message: `Welcome back, ${remoteUser.name}! Connected to Supabase backend table.`,
+          user: remoteUser,
+        };
+      }
+    } catch (err) {
+      console.warn('Supabase remote profile email lookup error:', err);
+    }
+
+    // 2. Secondary check: Local pre-seeded user accounts
+    const users = getRegisteredUsers();
+    const localUser = users.find(u => u.email && u.email.toLowerCase() === cleanEmail);
+
+    if (!localUser) {
+      return {
+        success: false,
+        message: `No farmer account found for email ${cleanEmail}. Please sign up as a farmer to create your profile on Supabase.`,
+      };
+    }
+
+    if (localUser.passwordHash !== enteredPassword) {
+      return {
+        success: false,
+        message: 'Incorrect password entered. Click "Forgot Password?" to reset your password.',
+      };
+    }
+
+    // Update last login
+    localUser.lastLoginAt = new Date().toISOString();
+    saveRegisteredUsers(users);
+    saveActiveAuthSession(localUser);
+
+    // Sync profile to Supabase backend profiles table
+    try {
+      await syncSupabaseProfile(localUser);
+    } catch (err) {
+      console.warn('Supabase profile sync error during login:', err);
+    }
+
+    return {
+      success: true,
+      message: `Welcome back, ${localUser.name}! Connected to Supabase backend table.`,
+      user: localUser,
+    };
+  }
+
+  // Branch 2: Phone Login
+  const cleanDigits = getCleanDigits(identifier);
+  if (cleanDigits.length !== 10) {
+    return { success: false, message: 'Please enter a valid 10-digit mobile number.' };
+  }
+
+  const normalized = normalizePhone(identifier);
 
   // 1. Primary check: Query Supabase backend profiles table
   try {
-    const remoteProfile = await fetchSupabaseProfileByPhone(rawPhone);
+    const remoteProfile = await fetchSupabaseProfileByPhone(identifier);
     if (remoteProfile) {
       const expectedPassword = remoteProfile.password_hash || 'Kisan@123';
       if (expectedPassword !== enteredPassword) {
@@ -465,6 +670,7 @@ export async function loginWithPassword(
         id: remoteProfile.id,
         name: remoteProfile.name,
         phone: remoteProfile.phone,
+        email: remoteProfile.email || undefined,
         isFPO: Boolean(remoteProfile.is_fpo),
         fpoName: remoteProfile.fpo_name || undefined,
         state: remoteProfile.state,

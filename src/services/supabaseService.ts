@@ -10,6 +10,7 @@ export interface DBProfileRow {
   id: string;
   name: string;
   phone: string;
+  email?: string | null;
   is_fpo: boolean;
   fpo_name: string | null;
   state: string;
@@ -532,6 +533,26 @@ export async function fetchSupabaseProfileByPhone(phone: string): Promise<DBProf
   }
 }
 
+export async function fetchSupabaseProfileByEmail(email: string): Promise<DBProfileRow | null> {
+  if (!isSupabaseConfigured()) return null;
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) return null;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .ilike('email', cleanEmail)
+      .limit(1)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return data as DBProfileRow;
+  } catch {
+    return null;
+  }
+}
+
 export async function syncSupabaseProfile(user: AuthUser): Promise<{ success: boolean; error: any }> {
   if (!isSupabaseConfigured()) return { success: true, error: null };
   try {
@@ -539,6 +560,7 @@ export async function syncSupabaseProfile(user: AuthUser): Promise<{ success: bo
       id: user.id.startsWith('farmer-') || user.id.startsWith('f-') ? user.id : undefined,
       name: user.name,
       phone: normalizePhone(user.phone),
+      email: user.email ? user.email.trim().toLowerCase() : null,
       is_fpo: user.isFPO,
       fpo_name: user.fpoName || null,
       state: user.state,
@@ -561,14 +583,21 @@ export async function syncSupabaseProfile(user: AuthUser): Promise<{ success: bo
   }
 }
 
-export async function recordSupabaseLogin(phone: string): Promise<void> {
+export async function recordSupabaseLogin(identifier: string): Promise<void> {
   if (!isSupabaseConfigured()) return;
   try {
-    const normalized = normalizePhone(phone);
-    await supabase
-      .from('profiles')
-      .update({ updated_at: new Date().toISOString() })
-      .eq('phone', normalized);
+    if (identifier.includes('@')) {
+      await supabase
+        .from('profiles')
+        .update({ updated_at: new Date().toISOString() })
+        .ilike('email', identifier.trim().toLowerCase());
+    } else {
+      const normalized = normalizePhone(identifier);
+      await supabase
+        .from('profiles')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('phone', normalized);
+    }
   } catch {
     // ignore
   }

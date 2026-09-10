@@ -19,6 +19,7 @@ CREATE TABLE public.profiles (
     id TEXT PRIMARY KEY DEFAULT ('f-' || substr(md5(random()::text), 1, 8)),
     name TEXT NOT NULL,
     phone TEXT NOT NULL UNIQUE,
+    email TEXT UNIQUE,
     is_fpo BOOLEAN NOT NULL DEFAULT FALSE,
     fpo_name TEXT,
     state TEXT NOT NULL DEFAULT 'Maharashtra',
@@ -125,6 +126,7 @@ CREATE TABLE public.apmc_mandi_benchmarks (
 
 -- 7. High Performance Indexes
 CREATE INDEX idx_profiles_phone ON public.profiles(phone);
+CREATE INDEX idx_profiles_email ON public.profiles(email);
 CREATE INDEX idx_produce_listings_crop ON public.produce_listings(crop_id);
 CREATE INDEX idx_produce_listings_state ON public.produce_listings(state);
 CREATE INDEX idx_produce_listings_status ON public.produce_listings(status);
@@ -171,12 +173,12 @@ BEGIN
 END $$;
 
 -- 11. Initial Verified Demo Data
-INSERT INTO public.profiles (id, name, phone, is_fpo, fpo_name, state, district, village, primary_crops, is_phone_verified, password_hash)
+INSERT INTO public.profiles (id, name, phone, email, is_fpo, fpo_name, state, district, village, primary_crops, is_phone_verified, password_hash)
 VALUES
-  ('f-101', 'Rameshwar Patil', '+91 98224 51203', true, 'Godavari Sahyadri Farmer Producer Co.', 'Maharashtra', 'Nashik', 'Lasalgaon', ARRAY['Onion', 'Tomato'], true, 'Kisan@123'),
-  ('f-102', 'Baldev Singh Dhillon', '+91 98141 87211', false, null, 'Uttar Pradesh', 'Agra', 'Khandauli', ARRAY['Potato', 'Mustard'], true, 'Kisan@123'),
-  ('f-103', 'Venkateshwarlu Reddy', '+91 94401 29845', true, 'Andhra Spice & Horticulture Federation', 'Karnataka', 'Kolar', 'Malur', ARRAY['Tomato', 'Chili'], true, 'Kisan@123'),
-  ('f-104', 'Devendra Malviya', '+91 98930 45612', true, 'Narmada Valley Kisan Producer Co.', 'Madhya Pradesh', 'Sehore', 'Ashta', ARRAY['Wheat', 'Soybean'], true, 'Kisan@123');
+  ('f-101', 'Rameshwar Patil', '+91 98224 51203', 'rameshwar@patilfarms.in', true, 'Godavari Sahyadri Farmer Producer Co.', 'Maharashtra', 'Nashik', 'Lasalgaon', ARRAY['Onion', 'Tomato'], true, 'Kisan@123'),
+  ('f-102', 'Baldev Singh Dhillon', '+91 98141 87211', 'baldev@dhillonfarms.in', false, null, 'Uttar Pradesh', 'Agra', 'Khandauli', ARRAY['Potato', 'Mustard'], true, 'Kisan@123'),
+  ('f-103', 'Venkateshwarlu Reddy', '+91 94401 29845', 'venkat@reddyagro.in', true, 'Andhra Spice & Horticulture Federation', 'Karnataka', 'Kolar', 'Malur', ARRAY['Tomato', 'Chili'], true, 'Kisan@123'),
+  ('f-104', 'Devendra Malviya', '+91 98930 45612', 'devendra@malviyakisan.in', true, 'Narmada Valley Kisan Producer Co.', 'Madhya Pradesh', 'Sehore', 'Ashta', ARRAY['Wheat', 'Soybean'], true, 'Kisan@123');
 
 INSERT INTO public.produce_listings (
   id, farmer_id, farmer_name, farmer_phone, is_fpo, fpo_name,

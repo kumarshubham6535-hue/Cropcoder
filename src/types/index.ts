@@ -9,6 +9,7 @@ export interface FarmerProfile {
   id: string;
   name: string;
   phone: string;
+  email?: string;
   isFPO: boolean;
   fpoName?: string;
   state: string;
