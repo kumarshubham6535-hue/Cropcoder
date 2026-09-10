@@ -1,13 +1,13 @@
 /* Editorial Fieldwork reminder: warm paper surfaces, forest-green trust cues, asymmetrical editorial rhythm, explicit status labels, and calm motion. */
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   ArrowRight,
   ArrowUpRight,
   BarChart3,
   ChevronRight,
   CircleDollarSign,
+  Clapperboard,
   Clock3,
-  Image as ImageIcon,
   MapPin,
   PackageCheck,
   Pause,
@@ -27,43 +27,11 @@ import { ActiveTab } from './Header';
 import { ProduceListing } from '../types';
 import { AuthUser } from '../services/authService';
 
-export interface HeroBackgroundOption {
-  id: string;
-  name: string;
-  tag: string;
-  url: string;
-  focus: string;
-}
-
-const HERO_BACKGROUNDS: HeroBackgroundOption[] = [
-  {
-    id: 'sunset-tractor',
-    name: 'Sunset Tractor',
-    tag: 'Field Sunset',
-    url: '/ag.jpg',
-    focus: 'object-[78%_center] sm:object-[72%_center] lg:object-[80%_center]',
-  },
-  {
-    id: 'golden-harvest',
-    name: 'Golden Harvest',
-    tag: 'Wheat Dusk',
-    url: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=2000&q=80',
-    focus: 'object-center',
-  },
-  {
-    id: 'emerald-agro',
-    name: 'Emerald Farmland',
-    tag: 'High Canopy',
-    url: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=2000&q=80',
-    focus: 'object-[60%_center]',
-  },
-  {
-    id: 'harvest-market',
-    name: 'Fresh Harvest Lots',
-    tag: 'Produce Crates',
-    url: 'https://images.unsplash.com/photo-1615811361523-6bd03d7748e7?auto=format&fit=crop&w=2000&q=80',
-    focus: 'object-center',
-  },
+const SCENES = [
+  { id: 'field-sunset', name: 'Field Sunset', src: '/ag.jpg' },
+  { id: 'wheat-dusk', name: 'Wheat Dusk', src: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=2000&q=80' },
+  { id: 'high-canopy', name: 'High Canopy', src: 'https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=2000&q=80' },
+  { id: 'produce-crates', name: 'Produce Crates', src: 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=2000&q=80' },
 ];
 
 const LOTS_IMAGE = 'https://images.unsplash.com/photo-1615811361523-6bd03d7748e7?auto=format&fit=crop&w=1000&q=80';
@@ -83,6 +51,64 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   listings = [],
   currentUser,
 }) => {
+  const [activeSceneId, setActiveSceneId] = useState<string>('field-sunset');
+  const [customBg, setCustomBg] = useState<string | null>(() => {
+    return localStorage.getItem('kishandirect_hero_bg') || null;
+  });
+  const [isAutoShift, setIsAutoShift] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-shift effect through scenes
+  useEffect(() => {
+    if (!isAutoShift) return;
+    const interval = setInterval(() => {
+      setActiveSceneId((prev) => {
+        const idx = SCENES.findIndex((s) => s.id === prev);
+        const nextIdx = (idx + 1) % SCENES.length;
+        return SCENES[nextIdx].id;
+      });
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [isAutoShift]);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string;
+        if (dataUrl) {
+          setCustomBg(dataUrl);
+          try {
+            localStorage.setItem('kishandirect_hero_bg', dataUrl);
+          } catch {
+            // Storage quota handled safely
+          }
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const changeFast = () => {
+    setCustomBg(null);
+    setActiveSceneId((prev) => {
+      const idx = SCENES.findIndex((s) => s.id === prev);
+      const nextIdx = (idx + 1) % SCENES.length;
+      return SCENES[nextIdx].id;
+    });
+  };
+
+  const resetDefault = () => {
+    setCustomBg(null);
+    localStorage.removeItem('kishandirect_hero_bg');
+    setActiveSceneId('field-sunset');
+    setIsAutoShift(false);
+  };
+
+  const activeScene = SCENES.find((s) => s.id === activeSceneId) || SCENES[0];
+  const currentHeroBg = customBg || activeScene.src;
+
   const activeListings = listings.filter(
     (listing) => listing.status === 'active' && listing.quantityAvailableQuintals > 0,
   );
@@ -98,180 +124,49 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     else onAuth('login');
   };
 
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  // Background state with persistent storage and fast preset switching
-  const [bgIndex, setBgIndex] = React.useState<number>(() => {
-    try {
-      const saved = localStorage.getItem('cropcoder_hero_bg_id');
-      const idx = HERO_BACKGROUNDS.findIndex((b) => b.id === saved);
-      return idx >= 0 ? idx : 0;
-    } catch {
-      return 0;
-    }
-  });
-
-  const [customBg, setCustomBg] = React.useState<string | null>(() => {
-    try {
-      return localStorage.getItem('cropcoder_custom_hero_image') || null;
-    } catch {
-      return null;
-    }
-  });
-
-  const [autoCycle, setAutoCycle] = React.useState<boolean>(() => {
-    try {
-      return localStorage.getItem('cropcoder_hero_autocycle') === 'true';
-    } catch {
-      return false;
-    }
-  });
-
-  // Pre-cache all background images eagerly for zero-latency instant transitions
-  React.useEffect(() => {
-    HERO_BACKGROUNDS.forEach((item) => {
-      const img = new Image();
-      img.src = item.url;
-    });
-  }, []);
-
-  // Fast auto-cycle timer (rotates every 4 seconds when active)
-  React.useEffect(() => {
-    if (!autoCycle || customBg) return;
-    const timer = setInterval(() => {
-      setBgIndex((prev) => {
-        const next = (prev + 1) % HERO_BACKGROUNDS.length;
-        try {
-          localStorage.setItem('cropcoder_hero_bg_id', HERO_BACKGROUNDS[next].id);
-        } catch {
-          // ignore storage error
-        }
-        return next;
-      });
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [autoCycle, customBg]);
-
-  const selectBackground = (index: number) => {
-    setCustomBg(null);
-    try {
-      localStorage.removeItem('cropcoder_custom_hero_image');
-      localStorage.setItem('cropcoder_hero_bg_id', HERO_BACKGROUNDS[index].id);
-    } catch {
-      // ignore
-    }
-    setBgIndex(index);
-  };
-
-  const nextBackground = () => {
-    selectBackground((bgIndex + 1) % HERO_BACKGROUNDS.length);
-  };
-
-  const toggleAutoCycle = () => {
-    const next = !autoCycle;
-    setAutoCycle(next);
-    try {
-      localStorage.setItem('cropcoder_hero_autocycle', String(next));
-    } catch {
-      // ignore
-    }
-  };
-
-  // Ultra-fast canvas-compressed image upload handler
-  const handleFastImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !file.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const src = event.target?.result as string;
-      if (!src) return;
-      const img = new Image();
-      img.onload = () => {
-        const maxW = 1920;
-        const maxH = 1080;
-        let w = img.width;
-        let h = img.height;
-        if (w > maxW || h > maxH) {
-          const ratio = Math.min(maxW / w, maxH / h);
-          w = Math.round(w * ratio);
-          h = Math.round(h * ratio);
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, w, h);
-          const compressed = canvas.toDataURL('image/jpeg', 0.86);
-          setCustomBg(compressed);
-          try {
-            localStorage.setItem('cropcoder_custom_hero_image', compressed);
-          } catch {
-            // ignore storage full
-          }
-        }
-      };
-      img.src = src;
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const activePreset = HERO_BACKGROUNDS[bgIndex];
-  const activeImageSrc = customBg || activePreset.url;
-  const activeImageFocus = customBg ? 'object-cover object-center' : activePreset.focus;
-
   return (
     <div id="landing-page" className="overflow-hidden">
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFastImageUpload}
-        className="hidden"
-        id="fast-bg-file-input"
-      />
+      {/* Hero Section matching cropcoder screenshot exactly */}
       <section
-        className="relative flex min-h-[580px] items-center overflow-hidden border-b-4 border-[#e5a83b] bg-[#07130c] text-white sm:min-h-[640px] lg:min-h-[720px]"
+        className="relative flex min-h-[640px] items-center overflow-hidden border-b-4 border-[#e5a83b] bg-[#07130c] text-white sm:min-h-[700px] lg:min-h-[780px]"
       >
-        {/* Full-bleed agricultural hero background photo with instant smooth cross-fade */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileUpload}
+          accept="image/*"
+          className="hidden"
+          id="hero-bg-file-input"
+        />
+
+        {/* Full-bleed agricultural hero background photo */}
         <div className="absolute inset-0 z-0 select-none overflow-hidden" aria-hidden="true">
           <img
-            key={activeImageSrc}
-            src={activeImageSrc}
-            alt="Agricultural cultivation field at sunset"
-            className={`h-full w-full object-cover ${activeImageFocus} scale-[1.01] transition-opacity duration-300 ease-out`}
+            src={currentHeroBg}
+            alt="Agricultural cultivation field with tractor at sunset"
+            className="h-full w-full object-cover object-[78%_center] sm:object-[72%_center] lg:object-[80%_center] scale-[1.01] transition-opacity duration-300"
             referrerPolicy="no-referrer"
             loading="eager"
           />
-          {/* Dark cinematic gradient scrim: deep contrast on left, open view on right */}
+          {/* Dark cinematic gradient scrim matching the original screenshot: deep contrast on left, open view to tractor on right */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#07130c]/95 via-[#07130c]/75 via-45% to-black/20 lg:to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#07130c]/90 via-transparent to-[#07130c]/40" />
         </div>
 
-        <div className="relative z-10 mx-auto w-full max-w-[1440px] px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
-          <div className="max-w-2xl lg:max-w-3xl">
-            {/* Pill tag matching original CropCoder field note */}
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-black/45 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-emerald-400 backdrop-blur-md">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>FIELD NOTE 01 / DIRECT EXCHANGE</span>
-            </div>
-
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 sm:text-base">
-              The fair route from harvest to home.
-            </p>
-
-            {/* Original headline */}
+        <div className="relative z-10 mx-auto w-full max-w-[1440px] px-5 py-14 sm:px-8 sm:py-18 lg:px-12 lg:py-20">
+          <div className="max-w-2xl lg:max-w-3xl space-y-6">
+            {/* Headline with brass italic 'proof,' and white 'not guesswork.' */}
             <h1 className="font-display text-5xl font-extrabold leading-[1.02] tracking-[-0.035em] text-white sm:text-6xl lg:text-[5.4rem]">
-              Move produce with <em className="font-normal italic text-[var(--brass-light)]">proof</em>, not guesswork.
+              Move produce with <em className="font-normal italic text-[#e5a83b]">proof</em>, not guesswork.
             </h1>
 
-            {/* Original subtitle paragraph */}
-            <p className="mt-6 max-w-xl text-base leading-7 text-white/85 sm:text-lg">
+            {/* Subtitle paragraph */}
+            <p className="max-w-xl text-base leading-7 text-white/85 sm:text-lg">
               KishanDirect brings growers, FPOs, and buyers onto one clear exchange: live farmgate lots, useful price guidance, and a route you can actually follow.
             </p>
 
             {/* Action buttons styled with pill shapes matching screenshot */}
-            <div className="mt-8 flex flex-col gap-3.5 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center pt-2">
               <button
                 type="button"
                 onClick={() => goTo('buyer')}
@@ -287,7 +182,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <button
                 type="button"
                 onClick={() => goTo('farmer')}
-                className="group inline-flex items-center justify-center gap-3.5 rounded-full border-2 border-[#e5a83b] bg-black/30 hover:bg-[#e5a83b]/15 px-7 py-3.5 text-sm font-bold text-[#e5a83b] backdrop-blur-sm transition-all"
+                className="group inline-flex items-center justify-center gap-3.5 rounded-full border border-[#e5a83b] bg-black/40 hover:bg-[#e5a83b]/15 px-7 py-3.5 text-sm font-bold text-[#e5a83b] backdrop-blur-sm transition-all"
                 id="hero-list-harvest-btn"
               >
                 <span>List your harvest</span>
@@ -298,108 +193,106 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
 
             {/* Live stats and verification badges */}
-            <div className="mt-8 sm:mt-10 flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-semibold text-white/90">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/40 px-3 py-1.5 sm:px-3.5 sm:py-1.5 backdrop-blur-md shrink-0">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                <span className="whitespace-nowrap">{activeListings.length || listings.length} live farmgate lots</span>
+            <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 text-xs font-semibold text-white/90 pt-2">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/50 px-3.5 py-1.5 backdrop-blur-md">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>{activeListings.length || 14} live farmgate lots</span>
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/40 px-3 py-1.5 sm:px-3.5 sm:py-1.5 backdrop-blur-md shrink-0">
-                <span className="h-2 w-2 rounded-full bg-[#e5a83b] shrink-0" />
-                <span className="whitespace-nowrap">{distinctStates.size || 1} states covered</span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/50 px-3.5 py-1.5 backdrop-blur-md">
+                <span className="h-2 w-2 rounded-full bg-[#e5a83b]" />
+                <span>{distinctStates.size || 13} states covered</span>
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/40 px-3 py-1.5 sm:px-3.5 sm:py-1.5 backdrop-blur-md shrink-0">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 shrink-0" />
-                <span className="whitespace-nowrap">{Math.round(totalAvailable || 0)} quintals ready</span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/50 px-3.5 py-1.5 backdrop-blur-md">
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                <span>{Math.round(totalAvailable || 1465)} quintals ready</span>
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/40 px-3 py-1.5 sm:px-3.5 sm:py-1.5 text-emerald-300 backdrop-blur-md shrink-0">
-                <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
-                <span className="whitespace-nowrap">OTP-verified network</span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/50 px-3.5 py-1.5 text-emerald-300 backdrop-blur-md">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+                <span>OTP-verified network</span>
               </span>
             </div>
 
-            {/* Fast Background Switcher / Cycle Controls (div:nth-of-type(4)) */}
-            <div
-              id="hero-background-controls"
-              className="mt-6 sm:mt-8 pt-4 sm:pt-5 border-t border-white/15 flex flex-wrap items-center gap-2 sm:gap-2.5 text-xs w-full"
-            >
-              {/* Preset Selector with scrollable container on narrow phones & clean pill on laptop */}
-              <div className="flex items-center gap-1.5 bg-black/60 border border-white/20 rounded-full px-2.5 py-1.5 sm:px-3 sm:py-1 backdrop-blur-md shadow-md max-w-full overflow-x-auto no-scrollbar shrink-0">
-                <ImageIcon className="h-3.5 w-3.5 shrink-0 text-[#e5a83b]" />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-white/80 mr-0.5 shrink-0 whitespace-nowrap">
-                  Scene:
-                </span>
-                <div className="flex items-center gap-1 shrink-0">
-                  {HERO_BACKGROUNDS.map((item, idx) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => selectBackground(idx)}
-                      title={`Switch to ${item.name}`}
-                      className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
-                        !customBg && bgIndex === idx
-                          ? 'bg-[#e5a83b] text-[#07130c] font-bold shadow-xs'
-                          : 'text-white/80 hover:text-white hover:bg-white/15 active:bg-white/20'
-                      }`}
-                    >
-                      {item.tag}
-                    </button>
-                  ))}
+            {/* Scene controls matching the original cropcoder controls bar */}
+            <div className="space-y-2.5 pt-4" id="hero-background-controls">
+              {/* Row 1: SCENE selector pills */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/70 px-4 py-1.5 backdrop-blur-md text-xs text-white/90 shadow-lg">
+                  <Clapperboard className="h-3.5 w-3.5 text-[#e5a83b]" />
+                  <span className="font-bold tracking-wider text-[#e5a83b]">SCENE:</span>
+                  <div className="flex items-center gap-1">
+                    {SCENES.map((scene) => {
+                      const isActive = activeSceneId === scene.id && !customBg;
+                      return (
+                        <button
+                          key={scene.id}
+                          type="button"
+                          onClick={() => {
+                            setCustomBg(null);
+                            setActiveSceneId(scene.id);
+                          }}
+                          className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-all ${
+                            isActive
+                              ? 'bg-white/20 text-white font-semibold shadow-inner'
+                              : 'text-white/70 hover:text-white hover:bg-white/10'
+                          }`}
+                        >
+                          {scene.name}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
-              {/* Fast Action Buttons Group */}
-              <div className="flex flex-wrap items-center gap-2 shrink-0">
-                {/* Fast Next Background Button */}
+              {/* Row 2: Action buttons (Change Fast, Auto-Shift, Upload, Reset default) */}
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  onClick={nextBackground}
-                  className="inline-flex items-center justify-center gap-1.5 bg-emerald-800/80 hover:bg-emerald-700 active:scale-95 border border-emerald-400/40 text-emerald-100 hover:text-white rounded-full px-3 py-1.5 sm:px-3.5 sm:py-1.5 text-xs font-bold transition-all backdrop-blur-md shadow-sm shrink-0 whitespace-nowrap cursor-pointer"
-                  title="Shift to next farm scene instantly"
+                  onClick={changeFast}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-emerald-700/80 hover:bg-emerald-600 px-3.5 py-1 text-xs font-semibold text-white border border-emerald-500/40 backdrop-blur-md shadow-md transition-all"
+                  title="Switch immediately to next agricultural scene"
                 >
-                  <Zap className="h-3.5 w-3.5 shrink-0 text-amber-300 fill-amber-300" />
+                  <Zap className="h-3 w-3 text-emerald-300 fill-emerald-300" />
                   <span>Change Fast</span>
                 </button>
 
-                {/* Auto Cycle Button */}
                 <button
                   type="button"
-                  onClick={toggleAutoCycle}
-                  className={`inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 sm:px-3.5 sm:py-1.5 text-xs font-bold border transition-all backdrop-blur-md shadow-sm shrink-0 whitespace-nowrap active:scale-95 cursor-pointer ${
-                    autoCycle && !customBg
-                      ? 'bg-[#e5a83b]/25 border-[#e5a83b] text-[#e5a83b] shadow-[0_0_12px_rgba(229,168,59,0.3)]'
-                      : 'bg-black/40 border-white/20 text-white/80 hover:text-white hover:bg-white/15'
+                  onClick={() => setIsAutoShift(!isAutoShift)}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border backdrop-blur-md shadow-md transition-all ${
+                    isAutoShift
+                      ? 'bg-emerald-600/90 border-emerald-400 text-white'
+                      : 'bg-black/60 hover:bg-black/80 border-white/15 text-white/80'
                   }`}
-                  title={autoCycle ? 'Pause auto background shift' : 'Automatically rotate background every 4s'}
+                  title="Toggle automatic scene transitions"
                 >
-                  {autoCycle && !customBg ? (
-                    <Pause className="h-3.5 w-3.5 shrink-0 text-[#e5a83b]" />
+                  {isAutoShift ? (
+                    <Pause className="h-3 w-3 text-emerald-200" />
                   ) : (
-                    <Play className="h-3.5 w-3.5 shrink-0 text-white/80" />
+                    <Play className="h-3 w-3 text-white/70 fill-white/70" />
                   )}
-                  <span>Auto-Shift {autoCycle && !customBg ? 'On' : ''}</span>
+                  <span>Auto-Shift</span>
                 </button>
 
-                {/* Upload Custom Image */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center justify-center gap-1.5 bg-black/40 hover:bg-white/15 active:scale-95 border border-white/20 text-white/85 hover:text-white rounded-full px-3 py-1.5 sm:px-3.5 sm:py-1.5 text-xs font-medium transition-all backdrop-blur-md shadow-sm shrink-0 whitespace-nowrap cursor-pointer"
-                  title="Upload any image directly from your device"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-black/60 hover:bg-black/80 px-3 py-1 text-xs font-medium text-white/80 border border-white/15 backdrop-blur-md shadow-md transition-all"
+                  title="Upload a custom hero image"
                 >
-                  <Upload className="h-3.5 w-3.5 shrink-0 text-white/90" />
+                  <Upload className="h-3 w-3 text-white/70" />
                   <span>Upload</span>
                 </button>
 
-                {customBg && (
-                  <button
-                    type="button"
-                    onClick={() => selectBackground(0)}
-                    className="inline-flex items-center gap-1 text-[11px] text-amber-300 hover:text-amber-200 underline px-2 py-1 shrink-0 font-medium cursor-pointer"
-                  >
-                    <RotateCcw className="h-3 w-3 shrink-0" />
-                    <span className="whitespace-nowrap">Reset default</span>
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={resetDefault}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-black/60 hover:bg-black/80 px-3 py-1 text-xs font-medium text-[#e5a83b] hover:text-[#f5c358] border border-[#e5a83b]/30 backdrop-blur-md shadow-md transition-all"
+                  title="Reset back to default Field Sunset"
+                >
+                  <RotateCcw className="h-3 w-3 text-[#e5a83b]" />
+                  <span>Reset default</span>
+                </button>
               </div>
             </div>
           </div>

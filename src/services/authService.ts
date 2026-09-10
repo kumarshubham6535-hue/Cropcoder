@@ -22,7 +22,7 @@ export interface AuthUser extends FarmerProfile {
 export interface OTPChallenge {
   phone: string;
   otpCode: string;
-  purpose: 'signup' | 'forgot_password' | 'profile_update';
+  purpose: 'signup' | 'forgot_password' | 'profile_update' | 'login';
   expiresAt: number; // unix timestamp ms
   createdAt: number;
   payload?: any; // temporary payload during signup/reset
@@ -190,7 +190,7 @@ export function generateRandomOTP(): string {
 // Request OTP challenge
 export async function requestOTPChallenge(
   rawIdentifier: string,
-  purpose: 'signup' | 'forgot_password' | 'profile_update',
+  purpose: 'signup' | 'forgot_password' | 'profile_update' | 'login',
   payload?: any
 ): Promise<{ success: boolean; message: string; challenge?: OTPChallenge }> {
   const isEmail = rawIdentifier.includes('@');
@@ -248,6 +248,13 @@ export async function requestOTPChallenge(
       };
     }
 
+    if (purpose === 'login' && !existingUser) {
+      return {
+        success: false,
+        message: `No account found with email ${cleanEmail}. Please check or sign up first.`,
+      };
+    }
+
     targetPhone = existingUser?.phone || rawIdentifier;
   } else {
     const cleanDigits = getCleanDigits(rawIdentifier);
@@ -296,6 +303,13 @@ export async function requestOTPChallenge(
       return {
         success: false,
         message: `No farmer account found for phone number ${normalized}. Please check or sign up first.`,
+      };
+    }
+
+    if (purpose === 'login' && !existingUser) {
+      return {
+        success: false,
+        message: `No account found with mobile number ${normalized}. Please check or sign up first.`,
       };
     }
   }
@@ -359,7 +373,7 @@ export function clearActiveOTPChallenge(): void {
 export async function verifyOTPChallenge(
   rawIdentifier: string,
   enteredOTP: string,
-  purpose: 'signup' | 'forgot_password' | 'profile_update',
+  purpose: 'signup' | 'forgot_password' | 'profile_update' | 'login',
   newPasswordForReset?: string
 ): Promise<{ success: boolean; message: string; user?: AuthUser }> {
   const challenge = getActiveOTPChallenge();
@@ -527,6 +541,76 @@ export async function verifyOTPChallenge(
       success: true,
       message: 'Password reset successfully! Updated in Supabase backend database.',
       user: updatedUser,
+    };
+  }
+
+  // Handle Login with OTP Completion
+  if (purpose === 'login') {
+    const users = getRegisteredUsers();
+    let loggedInUser = isEmail
+      ? users.find(u => u.email?.toLowerCase() === cleanEmail)
+      : users.find(u => getCleanDigits(u.phone) === cleanDigits);
+
+    if (!loggedInUser) {
+      // Remote fallback check via Supabase
+      try {
+        const remoteProfile = isEmail
+          ? await fetchSupabaseProfileByEmail(cleanEmail)
+          : await fetchSupabaseProfileByPhone(rawIdentifier);
+
+        if (remoteProfile) {
+          loggedInUser = {
+            id: remoteProfile.id,
+            name: remoteProfile.name,
+            phone: remoteProfile.phone,
+            email: remoteProfile.email || undefined,
+            isFPO: Boolean(remoteProfile.is_fpo),
+            fpoName: remoteProfile.fpo_name || undefined,
+            state: remoteProfile.state,
+            district: remoteProfile.district,
+            village: remoteProfile.village,
+            primaryCrops: remoteProfile.primary_crops || [],
+            passwordHash: remoteProfile.password_hash || 'Kisan@123',
+            isPhoneVerified: true,
+            registeredAt: remoteProfile.created_at || new Date().toISOString(),
+            lastLoginAt: new Date().toISOString(),
+            twoFactorEnabled: true,
+          };
+          users.push(loggedInUser);
+          saveRegisteredUsers(users);
+        }
+      } catch (err) {
+        console.warn('Supabase remote lookup on OTP login notice:', err);
+      }
+    }
+
+    if (!loggedInUser) {
+      return {
+        success: false,
+        message: isEmail
+          ? `No account found with email ${cleanEmail}.`
+          : `No account found with mobile number ${rawIdentifier}.`,
+      };
+    }
+
+    loggedInUser.lastLoginAt = new Date().toISOString();
+    loggedInUser.isPhoneVerified = true;
+    const userIndex = users.findIndex(u => u.id === loggedInUser!.id);
+    if (userIndex !== -1) {
+      users[userIndex] = loggedInUser;
+      saveRegisteredUsers(users);
+    }
+
+    saveActiveAuthSession(loggedInUser);
+    clearActiveOTPChallenge();
+
+    // Asynchronously record login in Supabase
+    recordSupabaseLogin(loggedInUser.email || loggedInUser.phone).catch(() => {});
+
+    return {
+      success: true,
+      message: `Welcome back, ${loggedInUser.name}! Signed in via OTP.`,
+      user: loggedInUser,
     };
   }
 

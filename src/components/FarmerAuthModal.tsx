@@ -36,6 +36,8 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
   
   // Login Form State - Starts empty (no pre-filled demo data)
   const [loginMethod, setLoginMethod] = useState<'phone' | 'email'>('phone');
+  const [loginAuthType, setLoginAuthType] = useState<'password' | 'otp'>('password');
+  const [loginOtpStep, setLoginOtpStep] = useState<'input' | 'otp'>('input');
   const [loginPhone, setLoginPhone] = useState<string>('');
   const [loginEmail, setLoginEmail] = useState<string>('');
   const [loginPassword, setLoginPassword] = useState<string>('');
@@ -84,6 +86,8 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
   // Sync mode when initialMode prop changes
   useEffect(() => {
     setMode(initialMode);
+    setLoginAuthType('password');
+    setLoginOtpStep('input');
     setErrorMsg(null);
     setSuccessMsg(null);
   }, [initialMode, isOpen]);
@@ -145,6 +149,83 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
     } catch (err: any) {
       setIsLoading(false);
       setErrorMsg(err?.message || 'Login failed. Please check your credentials and connection.');
+    }
+  };
+
+  // Handler: Login Step 1 -> Request OTP
+  const handleLoginRequestOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    const identifier = loginMethod === 'email' ? loginEmail.trim() : loginPhone.trim();
+
+    if (loginMethod === 'phone') {
+      const cleanDigits = getCleanDigits(loginPhone);
+      if (cleanDigits.length !== 10) {
+        setErrorMsg('Please enter a valid 10-digit mobile number.');
+        return;
+      }
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(identifier)) {
+        setErrorMsg('Please enter a valid email address.');
+        return;
+      }
+    }
+
+    setIsLoading(true);
+
+    try {
+      const result = await requestOTPChallenge(identifier, 'login');
+      setIsLoading(false);
+
+      if (result.success && result.challenge) {
+        setActiveChallenge(result.challenge);
+        setLoginOtpStep('otp');
+        setEnteredOTP('');
+        setResendTimer(45);
+        setSuccessMsg(result.message);
+      } else {
+        setErrorMsg(result.message);
+      }
+    } catch (err: any) {
+      setIsLoading(false);
+      setErrorMsg(err?.message || 'Failed to send login OTP. Please try again.');
+    }
+  };
+
+  // Handler: Login Step 2 -> Verify OTP & Sign In
+  const handleLoginVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    const identifier = loginMethod === 'email' ? loginEmail.trim() : loginPhone.trim();
+
+    if (enteredOTP.trim().length !== 6) {
+      setErrorMsg('Please enter the 6-digit OTP code received.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const result = await verifyOTPChallenge(identifier, enteredOTP, 'login');
+      setIsLoading(false);
+
+      if (result.success && result.user) {
+        setSuccessMsg(result.message);
+        setTimeout(() => {
+          onSuccess(result.user!);
+          onClose?.();
+        }, 500);
+      } else {
+        setErrorMsg(result.message);
+      }
+    } catch (err: any) {
+      setIsLoading(false);
+      setErrorMsg(err?.message || 'Failed to verify OTP. Please try again.');
     }
   };
 
@@ -330,10 +411,17 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
   };
 
   // Resend OTP Helper
-  const handleResendOTP = async (purpose: 'signup' | 'forgot_password') => {
+  const handleResendOTP = async (purpose: 'signup' | 'forgot_password' | 'login') => {
     if (resendTimer > 0) return;
-    const phoneToUse = purpose === 'signup' ? signupPhone : forgotPhone;
-    const result = await requestOTPChallenge(phoneToUse, purpose, activeChallenge?.payload);
+    let identifierToUse = '';
+    if (purpose === 'signup') {
+      identifierToUse = signupPhone;
+    } else if (purpose === 'forgot_password') {
+      identifierToUse = forgotPhone;
+    } else if (purpose === 'login') {
+      identifierToUse = loginMethod === 'email' ? loginEmail.trim() : loginPhone.trim();
+    }
+    const result = await requestOTPChallenge(identifierToUse, purpose, activeChallenge?.payload);
     if (result.success && result.challenge) {
       setActiveChallenge(result.challenge);
       setResendTimer(45);
@@ -392,139 +480,394 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
       
 
       {/* ------------------------------------------------------------- */}
-      {/* MODE 1: LOGIN WITH PASSWORD                                    */}
+      {/* MODE 1: LOGIN (PASSWORD OR OTP)                                */}
       {/* ------------------------------------------------------------- */}
       {mode === 'login' && (
-        <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
-          {/* Segmented Toggle: Phone Number vs Email ID */}
-          <div className="flex p-1 bg-stone-100 rounded-xl border border-stone-200">
-            <button
-              id="login-method-phone-tab"
-              type="button"
-              onClick={() => {
-                setLoginMethod('phone');
-                setErrorMsg(null);
-              }}
-              className={`flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                loginMethod === 'phone'
-                  ? 'bg-white text-[#1B4332] shadow-xs border border-stone-200/80 font-extrabold'
-                  : 'text-stone-500 hover:text-stone-800'
-              }`}
-            >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>Phone Number</span>
-            </button>
-            <button
-              id="login-method-email-tab"
-              type="button"
-              onClick={() => {
-                setLoginMethod('email');
-                setErrorMsg(null);
-              }}
-              className={`flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                loginMethod === 'email'
-                  ? 'bg-white text-[#1B4332] shadow-xs border border-stone-200/80 font-extrabold'
-                  : 'text-stone-500 hover:text-stone-800'
-              }`}
-            >
-              <Mail className="w-3.5 h-3.5" />
-              <span>Email ID</span>
-            </button>
-          </div>
-
-          {loginMethod === 'phone' ? (
-            <div>
-              <label htmlFor="farmer-login-phone-input" className="block font-bold text-stone-700 mb-1">
-                Mobile Phone Number
-              </label>
-              <div className="relative">
-                <span className="absolute left-3.5 top-2.5 text-stone-400 font-bold text-xs">+91</span>
-                <input
-                  id="farmer-login-phone-input"
-                  type="tel"
-                  maxLength={10}
-                  value={loginPhone}
-                  onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, ''))}
-                  placeholder="Enter 10-digit mobile"
-                  className="w-full pl-12 pr-3 py-2.5 bg-white border border-stone-300 rounded-xl font-medium text-stone-900 focus:outline-emerald-700"
-                  required
-                  autoFocus
-                />
-              </div>
-            </div>
-          ) : (
-            <div>
-              <label htmlFor="farmer-login-email-input" className="block font-bold text-stone-700 mb-1">
-                Email ID
-              </label>
-              <div className="relative">
-                <div className="absolute left-3.5 top-2.5 text-stone-400">
-                  <Mail className="w-4 h-4" />
-                </div>
-                <input
-                  id="farmer-login-email-input"
-                  type="email"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="w-full pl-10 pr-3 py-2.5 bg-white border border-stone-300 rounded-xl font-medium text-stone-900 focus:outline-emerald-700"
-                  required
-                  autoFocus
-                />
-              </div>
-            </div>
-          )}
-
+        <div className="space-y-4 text-xs">
+          {/* Top-Level Sign-In Method Toggle: Password vs OTP */}
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="font-bold text-stone-700">Password</label>
+            <div className="text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+              <span>Sign-In Method</span>
+              <span className="text-[10px] text-stone-400 font-normal">Password or OTP</span>
+            </div>
+            <div className="flex p-1 bg-stone-100 rounded-xl border border-stone-200">
               <button
+                id="login-auth-type-password-tab"
                 type="button"
                 onClick={() => {
-                  setMode('forgot_password');
-                  setForgotStep('phone');
-                  setForgotPhone(loginMethod === 'email' ? loginEmail : loginPhone);
+                  setLoginAuthType('password');
+                  setLoginOtpStep('input');
+                  setEnteredOTP('');
                   setErrorMsg(null);
                   setSuccessMsg(null);
                 }}
-                className="text-xs font-semibold text-emerald-800 hover:text-emerald-950 hover:underline cursor-pointer"
+                className={`flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  loginAuthType === 'password'
+                    ? 'bg-white text-[#1B4332] shadow-xs border border-stone-200/80 font-extrabold'
+                    : 'text-stone-500 hover:text-stone-800'
+                }`}
               >
-                Forgot password?
+                <Lock className="w-3.5 h-3.5" />
+                <span>Password</span>
               </button>
-            </div>
-            <div className="relative">
-              <input
-                id="farmer-login-password-input"
-                type={showLoginPassword ? 'text' : 'password'}
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder="Enter your password"
-                className="w-full pl-3.5 pr-10 py-2.5 bg-white border border-stone-300 rounded-xl font-medium text-stone-900 focus:outline-emerald-700"
-                required
-              />
               <button
+                id="login-auth-type-otp-tab"
                 type="button"
-                onClick={() => setShowLoginPassword(!showLoginPassword)}
-                className="absolute right-3 top-2.5 text-stone-400 hover:text-stone-600 cursor-pointer"
+                onClick={() => {
+                  setLoginAuthType('otp');
+                  setLoginOtpStep('input');
+                  setEnteredOTP('');
+                  setErrorMsg(null);
+                  setSuccessMsg(null);
+                }}
+                className={`flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  loginAuthType === 'otp'
+                    ? 'bg-white text-[#1B4332] shadow-xs border border-stone-200/80 font-extrabold'
+                    : 'text-stone-500 hover:text-stone-800'
+                }`}
               >
-                {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <KeyRound className="w-3.5 h-3.5" />
+                <span>Login with OTP</span>
               </button>
             </div>
           </div>
 
-          <button
-            id="farmer-login-submit-btn"
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-3 bg-[#1B4332] hover:bg-[#143326] text-white font-bold rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 text-sm disabled:opacity-70 mt-2"
-          >
-            {isLoading ? (
-              <RefreshCw className="w-4 h-4 animate-spin text-[#D4A24E]" />
-            ) : (
-              <Lock className="w-4 h-4 text-[#D4A24E]" />
-            )}
-            <span>{isLoading ? 'Signing In...' : 'Sign In'}</span>
-          </button>
+          {/* Segmented Identifier Toggle: Phone Number vs Email ID */}
+          <div>
+            <div className="text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+              <span>Account Identifier</span>
+              {loginAuthType === 'otp' && loginOtpStep === 'otp' && (
+                <span className="text-[10px] text-emerald-700 font-bold">OTP Active</span>
+              )}
+            </div>
+            <div className="flex p-1 bg-stone-100 rounded-xl border border-stone-200">
+              <button
+                id="login-method-phone-tab"
+                type="button"
+                onClick={() => {
+                  setLoginMethod('phone');
+                  if (loginAuthType === 'otp') {
+                    setLoginOtpStep('input');
+                    setEnteredOTP('');
+                  }
+                  setErrorMsg(null);
+                }}
+                className={`flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  loginMethod === 'phone'
+                    ? 'bg-white text-[#1B4332] shadow-xs border border-stone-200/80 font-extrabold'
+                    : 'text-stone-500 hover:text-stone-800'
+                }`}
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span>Phone Number</span>
+              </button>
+              <button
+                id="login-method-email-tab"
+                type="button"
+                onClick={() => {
+                  setLoginMethod('email');
+                  if (loginAuthType === 'otp') {
+                    setLoginOtpStep('input');
+                    setEnteredOTP('');
+                  }
+                  setErrorMsg(null);
+                }}
+                className={`flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  loginMethod === 'email'
+                    ? 'bg-white text-[#1B4332] shadow-xs border border-stone-200/80 font-extrabold'
+                    : 'text-stone-500 hover:text-stone-800'
+                }`}
+              >
+                <Mail className="w-3.5 h-3.5" />
+                <span>Email ID</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Conditional Form: Password Auth vs OTP Auth */}
+          {loginAuthType === 'password' ? (
+            <form onSubmit={handleLoginSubmit} className="space-y-4">
+              {loginMethod === 'phone' ? (
+                <div>
+                  <label htmlFor="farmer-login-phone-input" className="block font-bold text-stone-700 mb-1">
+                    Mobile Phone Number
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-2.5 text-stone-400 font-bold text-xs">+91</span>
+                    <input
+                      id="farmer-login-phone-input"
+                      type="tel"
+                      maxLength={10}
+                      value={loginPhone}
+                      onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, ''))}
+                      placeholder="Enter 10-digit mobile"
+                      className="w-full pl-12 pr-3 py-2.5 bg-white border border-stone-300 rounded-xl font-medium text-stone-900 focus:outline-emerald-700"
+                      required
+                      autoFocus
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label htmlFor="farmer-login-email-input" className="block font-bold text-stone-700 mb-1">
+                    Email ID
+                  </label>
+                  <div className="relative">
+                    <div className="absolute left-3.5 top-2.5 text-stone-400">
+                      <Mail className="w-4 h-4" />
+                    </div>
+                    <input
+                      id="farmer-login-email-input"
+                      type="email"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="w-full pl-10 pr-3 py-2.5 bg-white border border-stone-300 rounded-xl font-medium text-stone-900 focus:outline-emerald-700"
+                      required
+                      autoFocus
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-bold text-stone-700">Password</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('forgot_password');
+                      setForgotStep('phone');
+                      setForgotPhone(loginMethod === 'email' ? loginEmail : loginPhone);
+                      setErrorMsg(null);
+                      setSuccessMsg(null);
+                    }}
+                    className="text-xs font-semibold text-emerald-800 hover:text-emerald-950 hover:underline cursor-pointer"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    id="farmer-login-password-input"
+                    type={showLoginPassword ? 'text' : 'password'}
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className="w-full pl-3.5 pr-10 py-2.5 bg-white border border-stone-300 rounded-xl font-medium text-stone-900 focus:outline-emerald-700"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPassword(!showLoginPassword)}
+                    className="absolute right-3 top-2.5 text-stone-400 hover:text-stone-600 cursor-pointer"
+                  >
+                    {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                id="farmer-login-submit-btn"
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3 bg-[#1B4332] hover:bg-[#143326] text-white font-bold rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 text-sm disabled:opacity-70 mt-2"
+              >
+                {isLoading ? (
+                  <RefreshCw className="w-4 h-4 animate-spin text-[#D4A24E]" />
+                ) : (
+                  <Lock className="w-4 h-4 text-[#D4A24E]" />
+                )}
+                <span>{isLoading ? 'Signing In...' : 'Sign In'}</span>
+              </button>
+
+              {/* Toggle link to switch to OTP login */}
+              <div className="text-center pt-2">
+                <button
+                  id="switch-to-otp-login-btn"
+                  type="button"
+                  onClick={() => {
+                    setLoginAuthType('otp');
+                    setLoginOtpStep('input');
+                    setEnteredOTP('');
+                    setErrorMsg(null);
+                    setSuccessMsg(null);
+                  }}
+                  className="text-xs font-semibold text-emerald-800 hover:text-emerald-950 hover:underline cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  <KeyRound className="w-3.5 h-3.5" />
+                  <span>Sign in with OTP instead</span>
+                </button>
+              </div>
+            </form>
+          ) : (
+            /* OTP Sign-In Workflow */
+            <div className="space-y-4">
+              {loginOtpStep === 'input' ? (
+                <form onSubmit={handleLoginRequestOTP} className="space-y-4">
+                  {loginMethod === 'phone' ? (
+                    <div>
+                      <label htmlFor="farmer-login-otp-phone-input" className="block font-bold text-stone-700 mb-1">
+                        Mobile Phone Number
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3.5 top-2.5 text-stone-400 font-bold text-xs">+91</span>
+                        <input
+                          id="farmer-login-otp-phone-input"
+                          type="tel"
+                          maxLength={10}
+                          value={loginPhone}
+                          onChange={(e) => setLoginPhone(e.target.value.replace(/\D/g, ''))}
+                          placeholder="Enter 10-digit mobile"
+                          className="w-full pl-12 pr-3 py-2.5 bg-white border border-stone-300 rounded-xl font-medium text-stone-900 focus:outline-emerald-700"
+                          required
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <label htmlFor="farmer-login-otp-email-input" className="block font-bold text-stone-700 mb-1">
+                        Registered Email ID
+                      </label>
+                      <div className="relative">
+                        <div className="absolute left-3.5 top-2.5 text-stone-400">
+                          <Mail className="w-4 h-4" />
+                        </div>
+                        <input
+                          id="farmer-login-otp-email-input"
+                          type="email"
+                          value={loginEmail}
+                          onChange={(e) => setLoginEmail(e.target.value)}
+                          placeholder="you@example.com"
+                          className="w-full pl-10 pr-3 py-2.5 bg-white border border-stone-300 rounded-xl font-medium text-stone-900 focus:outline-emerald-700"
+                          required
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    id="farmer-login-send-otp-btn"
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full py-3 bg-[#1B4332] hover:bg-[#143326] text-white font-bold rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 text-sm disabled:opacity-70 mt-2"
+                  >
+                    {isLoading ? (
+                      <RefreshCw className="w-4 h-4 animate-spin text-[#D4A24E]" />
+                    ) : (
+                      <KeyRound className="w-4 h-4 text-[#D4A24E]" />
+                    )}
+                    <span>{isLoading ? 'Sending OTP...' : 'Send OTP'}</span>
+                    {!isLoading && <ArrowRight className="w-4 h-4" />}
+                  </button>
+
+                  {/* Toggle link to switch to Password login */}
+                  <div className="text-center pt-2">
+                    <button
+                      id="switch-to-password-login-btn"
+                      type="button"
+                      onClick={() => {
+                        setLoginAuthType('password');
+                        setErrorMsg(null);
+                        setSuccessMsg(null);
+                      }}
+                      className="text-xs font-semibold text-emerald-800 hover:text-emerald-950 hover:underline cursor-pointer inline-flex items-center gap-1.5"
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>Sign in with password instead</span>
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                /* OTP Verification Step */
+                <form onSubmit={handleLoginVerifyOTP} className="space-y-4">
+                  <div className="text-center space-y-1">
+                    <p className="text-stone-600 text-xs">
+                      Enter the 6-digit code sent to{' '}
+                      <strong>
+                        {loginMethod === 'email' ? loginEmail.trim() : `+91 ${loginPhone.trim()}`}
+                      </strong>
+                    </p>
+                  </div>
+
+                  <div>
+                    <input
+                      id="login-otp-input"
+                      type="text"
+                      maxLength={6}
+                      value={enteredOTP}
+                      onChange={(e) => setEnteredOTP(e.target.value.replace(/\D/g, ''))}
+                      placeholder="------"
+                      className="w-full py-3 text-center text-2xl tracking-[0.4em] font-bold bg-white border border-stone-300 focus:border-[#1B4332] rounded-xl text-[#1B4332] focus:outline-none"
+                      autoFocus
+                      required
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLoginOtpStep('input');
+                        setEnteredOTP('');
+                        setErrorMsg(null);
+                      }}
+                      className="font-semibold text-stone-500 hover:text-stone-800 cursor-pointer"
+                    >
+                      ← Edit {loginMethod === 'email' ? 'email' : 'mobile'}
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={resendTimer > 0}
+                      onClick={() => handleResendOTP('login')}
+                      className={`font-semibold cursor-pointer flex items-center gap-1 ${
+                        resendTimer > 0 ? 'text-stone-400 cursor-not-allowed' : 'text-emerald-800 hover:underline'
+                      }`}
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>{resendTimer > 0 ? `Resend (${resendTimer}s)` : 'Resend code'}</span>
+                    </button>
+                  </div>
+
+                  <button
+                    id="farmer-login-otp-verify-btn"
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full py-3 bg-[#1B4332] hover:bg-[#143326] text-white font-bold rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 text-sm disabled:opacity-70 mt-2"
+                  >
+                    {isLoading ? (
+                      <RefreshCw className="w-4 h-4 animate-spin text-[#D4A24E]" />
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4 text-[#D4A24E]" />
+                    )}
+                    <span>{isLoading ? 'Verifying OTP...' : 'Verify & Sign In'}</span>
+                  </button>
+
+                  {/* Toggle link to switch to Password login */}
+                  <div className="text-center pt-2">
+                    <button
+                      id="switch-to-password-login-from-otp-step-btn"
+                      type="button"
+                      onClick={() => {
+                        setLoginAuthType('password');
+                        setLoginOtpStep('input');
+                        setEnteredOTP('');
+                        setErrorMsg(null);
+                        setSuccessMsg(null);
+                      }}
+                      className="text-xs font-semibold text-emerald-800 hover:text-emerald-950 hover:underline cursor-pointer inline-flex items-center gap-1.5"
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>Sign in with password instead</span>
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          )}
 
           {/* Text link to switch to Sign Up */}
           <div className="text-center pt-3 border-t border-stone-200">
@@ -542,7 +885,7 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
               Sign Up
             </button>
           </div>
-        </form>
+        </div>
       )}
 
       {/* ------------------------------------------------------------- */}
