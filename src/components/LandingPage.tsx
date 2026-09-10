@@ -298,94 +298,109 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
 
             {/* Live stats and verification badges */}
-            <div className="mt-10 flex flex-wrap items-center gap-3 text-xs font-semibold text-white/90">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/40 px-3.5 py-1.5 backdrop-blur-md">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>{activeListings.length || listings.length} live farmgate lots</span>
+            <div className="mt-8 sm:mt-10 flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-semibold text-white/90">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/40 px-3 py-1.5 sm:px-3.5 sm:py-1.5 backdrop-blur-md shrink-0">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <span className="whitespace-nowrap">{activeListings.length || listings.length} live farmgate lots</span>
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/40 px-3.5 py-1.5 backdrop-blur-md">
-                <span className="h-2 w-2 rounded-full bg-[#e5a83b]" />
-                <span>{distinctStates.size || 1} states covered</span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/40 px-3 py-1.5 sm:px-3.5 sm:py-1.5 backdrop-blur-md shrink-0">
+                <span className="h-2 w-2 rounded-full bg-[#e5a83b] shrink-0" />
+                <span className="whitespace-nowrap">{distinctStates.size || 1} states covered</span>
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/40 px-3.5 py-1.5 backdrop-blur-md">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                <span>{Math.round(totalAvailable || 0)} quintals ready</span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/40 px-3 py-1.5 sm:px-3.5 sm:py-1.5 backdrop-blur-md shrink-0">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 shrink-0" />
+                <span className="whitespace-nowrap">{Math.round(totalAvailable || 0)} quintals ready</span>
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/40 px-3.5 py-1.5 text-emerald-300 backdrop-blur-md">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                <span>OTP-verified network</span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/40 px-3 py-1.5 sm:px-3.5 sm:py-1.5 text-emerald-300 backdrop-blur-md shrink-0">
+                <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                <span className="whitespace-nowrap">OTP-verified network</span>
               </span>
             </div>
 
-            {/* Fast Background Switcher / Cycle Controls */}
-            <div className="mt-8 pt-5 border-t border-white/15 flex flex-wrap items-center gap-2 text-xs">
-              <div className="flex items-center gap-1.5 bg-black/50 border border-white/15 rounded-full px-2.5 py-1 backdrop-blur-md">
-                <ImageIcon className="h-3.5 w-3.5 text-[#e5a83b]" />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-white/70 mr-1">Background:</span>
-                {HERO_BACKGROUNDS.map((item, idx) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => selectBackground(idx)}
-                    title={`Switch to ${item.name}`}
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${
-                      !customBg && bgIndex === idx
-                        ? 'bg-[#e5a83b] text-[#07130c] font-bold shadow-xs'
-                        : 'text-white/80 hover:text-white hover:bg-white/15'
-                    }`}
-                  >
-                    {item.tag}
-                  </button>
-                ))}
+            {/* Fast Background Switcher / Cycle Controls (div:nth-of-type(4)) */}
+            <div
+              id="hero-background-controls"
+              className="mt-6 sm:mt-8 pt-4 sm:pt-5 border-t border-white/15 flex flex-wrap items-center gap-2 sm:gap-2.5 text-xs w-full"
+            >
+              {/* Preset Selector with scrollable container on narrow phones & clean pill on laptop */}
+              <div className="flex items-center gap-1.5 bg-black/60 border border-white/20 rounded-full px-2.5 py-1.5 sm:px-3 sm:py-1 backdrop-blur-md shadow-md max-w-full overflow-x-auto no-scrollbar shrink-0">
+                <ImageIcon className="h-3.5 w-3.5 shrink-0 text-[#e5a83b]" />
+                <span className="text-[11px] font-bold uppercase tracking-wider text-white/80 mr-0.5 shrink-0 whitespace-nowrap">
+                  Scene:
+                </span>
+                <div className="flex items-center gap-1 shrink-0">
+                  {HERO_BACKGROUNDS.map((item, idx) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => selectBackground(idx)}
+                      title={`Switch to ${item.name}`}
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                        !customBg && bgIndex === idx
+                          ? 'bg-[#e5a83b] text-[#07130c] font-bold shadow-xs'
+                          : 'text-white/80 hover:text-white hover:bg-white/15 active:bg-white/20'
+                      }`}
+                    >
+                      {item.tag}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {/* Fast Next Background Button */}
-              <button
-                type="button"
-                onClick={nextBackground}
-                className="inline-flex items-center gap-1.5 bg-emerald-900/60 hover:bg-emerald-800/80 border border-emerald-500/40 text-emerald-200 hover:text-white rounded-full px-3 py-1.5 text-xs font-bold transition-colors backdrop-blur-md"
-                title="Shift to next farm scene instantly"
-              >
-                <Zap className="h-3 w-3 text-emerald-400 fill-emerald-400" />
-                <span>Change Fast</span>
-              </button>
-
-              {/* Auto Cycle Button */}
-              <button
-                type="button"
-                onClick={toggleAutoCycle}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border transition-colors backdrop-blur-md ${
-                  autoCycle && !customBg
-                    ? 'bg-[#e5a83b]/20 border-[#e5a83b] text-[#e5a83b]'
-                    : 'bg-black/40 border-white/15 text-white/70 hover:text-white hover:bg-white/10'
-                }`}
-                title={autoCycle ? 'Pause auto background shift' : 'Automatically rotate background every 4s'}
-              >
-                {autoCycle && !customBg ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-                <span>Auto-Shift {autoCycle && !customBg ? 'Active' : ''}</span>
-              </button>
-
-              {/* Upload Custom Image */}
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-1.5 bg-black/40 hover:bg-white/10 border border-white/15 text-white/75 hover:text-white rounded-full px-3 py-1.5 text-xs font-medium transition-colors backdrop-blur-md"
-                title="Upload any image directly from your device"
-              >
-                <Upload className="h-3 w-3" />
-                <span>Upload</span>
-              </button>
-
-              {customBg && (
+              {/* Fast Action Buttons Group */}
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                {/* Fast Next Background Button */}
                 <button
                   type="button"
-                  onClick={() => selectBackground(0)}
-                  className="inline-flex items-center gap-1 text-[11px] text-amber-300 hover:underline px-1 py-1"
+                  onClick={nextBackground}
+                  className="inline-flex items-center justify-center gap-1.5 bg-emerald-800/80 hover:bg-emerald-700 active:scale-95 border border-emerald-400/40 text-emerald-100 hover:text-white rounded-full px-3 py-1.5 sm:px-3.5 sm:py-1.5 text-xs font-bold transition-all backdrop-blur-md shadow-sm shrink-0 whitespace-nowrap cursor-pointer"
+                  title="Shift to next farm scene instantly"
                 >
-                  <RotateCcw className="h-3 w-3" />
-                  <span>Reset to default</span>
+                  <Zap className="h-3.5 w-3.5 shrink-0 text-amber-300 fill-amber-300" />
+                  <span>Change Fast</span>
                 </button>
-              )}
+
+                {/* Auto Cycle Button */}
+                <button
+                  type="button"
+                  onClick={toggleAutoCycle}
+                  className={`inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 sm:px-3.5 sm:py-1.5 text-xs font-bold border transition-all backdrop-blur-md shadow-sm shrink-0 whitespace-nowrap active:scale-95 cursor-pointer ${
+                    autoCycle && !customBg
+                      ? 'bg-[#e5a83b]/25 border-[#e5a83b] text-[#e5a83b] shadow-[0_0_12px_rgba(229,168,59,0.3)]'
+                      : 'bg-black/40 border-white/20 text-white/80 hover:text-white hover:bg-white/15'
+                  }`}
+                  title={autoCycle ? 'Pause auto background shift' : 'Automatically rotate background every 4s'}
+                >
+                  {autoCycle && !customBg ? (
+                    <Pause className="h-3.5 w-3.5 shrink-0 text-[#e5a83b]" />
+                  ) : (
+                    <Play className="h-3.5 w-3.5 shrink-0 text-white/80" />
+                  )}
+                  <span>Auto-Shift {autoCycle && !customBg ? 'On' : ''}</span>
+                </button>
+
+                {/* Upload Custom Image */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="inline-flex items-center justify-center gap-1.5 bg-black/40 hover:bg-white/15 active:scale-95 border border-white/20 text-white/85 hover:text-white rounded-full px-3 py-1.5 sm:px-3.5 sm:py-1.5 text-xs font-medium transition-all backdrop-blur-md shadow-sm shrink-0 whitespace-nowrap cursor-pointer"
+                  title="Upload any image directly from your device"
+                >
+                  <Upload className="h-3.5 w-3.5 shrink-0 text-white/90" />
+                  <span>Upload</span>
+                </button>
+
+                {customBg && (
+                  <button
+                    type="button"
+                    onClick={() => selectBackground(0)}
+                    className="inline-flex items-center gap-1 text-[11px] text-amber-300 hover:text-amber-200 underline px-2 py-1 shrink-0 font-medium cursor-pointer"
+                  >
+                    <RotateCcw className="h-3 w-3 shrink-0" />
+                    <span className="whitespace-nowrap">Reset default</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
