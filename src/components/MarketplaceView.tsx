@@ -200,9 +200,9 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
       </div>
 
       {/* Search & Filter Controls with Clean Structure & High Legibility */}
-      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-white p-4 rounded-xl border border-stone-200 shadow-xs">
-        <div className="sm:col-span-5 flex flex-col justify-center">
-          <label className="text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3.5 bg-white p-4 sm:p-5 rounded-xl border border-stone-200 shadow-xs">
+        <div className="md:col-span-2 lg:col-span-5 flex flex-col justify-center">
+          <label htmlFor="marketplace-search-input" className="text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
             <Search className="w-3.5 h-3.5 text-stone-400" />
             <span>Search Produce / Location</span>
           </label>
@@ -213,13 +213,13 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
               placeholder="Search by crop, variety, district (e.g. Nashik, Agra), or state..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-3 pr-4 py-2 bg-stone-50 border border-stone-300 rounded-lg text-xs sm:text-sm font-medium focus:ring-2 focus:ring-[#1B4332] focus:bg-white focus:outline-hidden transition-all"
+              className="w-full h-11 pl-3.5 pr-4 py-2.5 bg-stone-50 hover:bg-white border border-stone-300 hover:border-stone-400 rounded-lg text-xs sm:text-sm font-medium focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] focus:bg-white focus:outline-hidden transition-all"
             />
           </div>
         </div>
 
-        <div className="sm:col-span-3.5 flex flex-col justify-center">
-          <label htmlFor="marketplace-crop-filter" className="text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+        <div className="md:col-span-1 lg:col-span-4 flex flex-col justify-center">
+          <label htmlFor="marketplace-crop-filter" className="text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
             <Sprout className="w-3.5 h-3.5 text-emerald-600" />
             <span>Crop / Commodity</span>
           </label>
@@ -227,7 +227,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
             id="marketplace-crop-filter"
             value={selectedCropFilter}
             onChange={(e) => setSelectedCropFilter(e.target.value)}
-            className="w-full py-2 px-3 bg-stone-50 border border-stone-300 rounded-lg text-xs font-bold text-stone-800 cursor-pointer focus:ring-2 focus:ring-[#1B4332] focus:bg-white focus:outline-hidden transition-all"
+            className="w-full h-11 py-2.5 px-3.5 bg-stone-50 hover:bg-white border border-stone-300 hover:border-stone-400 rounded-lg text-xs sm:text-sm font-semibold text-stone-800 cursor-pointer focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] focus:bg-white focus:outline-hidden transition-all truncate"
           >
             <option value="all">All Crops & Commodities ({listings.length} Lots Available)</option>
             {activeCrops.length > 0 && (
@@ -251,8 +251,8 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
           </select>
         </div>
 
-        <div className="sm:col-span-3.5 flex flex-col justify-center">
-          <label htmlFor="marketplace-state-filter" className="text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+        <div className="md:col-span-1 lg:col-span-3 flex flex-col justify-center">
+          <label htmlFor="marketplace-state-filter" className="text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
             <MapPin className="w-3.5 h-3.5 text-blue-600" />
             <span>Indian State / UT</span>
           </label>
@@ -260,7 +260,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
             id="marketplace-state-filter"
             value={selectedStateFilter}
             onChange={(e) => setSelectedStateFilter(e.target.value)}
-            className="w-full py-2 px-3 bg-stone-50 border border-stone-300 rounded-lg text-xs font-bold text-stone-800 cursor-pointer focus:ring-2 focus:ring-[#1B4332] focus:bg-white focus:outline-hidden transition-all"
+            className="w-full h-11 py-2.5 px-3.5 bg-stone-50 hover:bg-white border border-stone-300 hover:border-stone-400 rounded-lg text-xs sm:text-sm font-semibold text-stone-800 cursor-pointer focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] focus:bg-white focus:outline-hidden transition-all truncate"
           >
             <option value="all">All Indian States & UTs (All 36 Regions)</option>
             {activeStatesList.length > 0 && (
@@ -286,7 +286,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
         </div>
 
         {/* Hide Sold Out / In-Stock toggle */}
-        <div className="sm:col-span-12 flex items-center justify-between pt-2 border-t border-stone-100 text-xs">
+        <div className="md:col-span-2 lg:col-span-12 flex flex-wrap items-center justify-between pt-2.5 border-t border-stone-100 text-xs gap-2">
           <label className="flex items-center gap-2 cursor-pointer font-bold text-stone-700 select-none">
             <input
               type="checkbox"

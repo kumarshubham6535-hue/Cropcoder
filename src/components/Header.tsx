@@ -84,8 +84,8 @@ export const Header: React.FC<HeaderProps> = ({
                       className="absolute bottom-0 left-2 right-2 h-[3px] rounded-full bg-[var(--forest)]"
                       transition={{
                         type: 'spring',
-                        stiffness: 420,
-                        damping: 32,
+                        stiffness: 650,
+                        damping: 36,
                       }}
                     />
                   )}

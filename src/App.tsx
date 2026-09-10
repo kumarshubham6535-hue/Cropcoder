@@ -417,7 +417,7 @@ export default function App() {
         activeTab={activeTab}
         onSelectTab={(tab) => {
           setActiveTab(tab);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          window.scrollTo(0, 0);
         }}
         ordersCount={orders.filter(o => o.status !== 'cancelled').length}
         currentUser={currentUser}
@@ -435,7 +435,7 @@ export default function App() {
             currentUser={currentUser}
             onSelectTab={(tab) => {
               setActiveTab(tab);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
+              window.scrollTo(0, 0);
             }}
             onAuth={openAuth}
           />

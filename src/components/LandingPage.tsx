@@ -7,20 +7,65 @@ import {
   ChevronRight,
   CircleDollarSign,
   Clock3,
+  Image as ImageIcon,
   MapPin,
   PackageCheck,
+  Pause,
+  Play,
+  RotateCcw,
   Route,
   ShieldCheck,
   ShoppingCart,
+  Sparkles,
   Sprout,
   Truck,
+  Upload,
   Wheat,
+  Zap,
 } from 'lucide-react';
 import { ActiveTab } from './Header';
 import { ProduceListing } from '../types';
 import { AuthUser } from '../services/authService';
 
-const HERO_IMAGE = '/hero-ag.jpg';
+export interface HeroBackgroundOption {
+  id: string;
+  name: string;
+  tag: string;
+  url: string;
+  focus: string;
+}
+
+const HERO_BACKGROUNDS: HeroBackgroundOption[] = [
+  {
+    id: 'sunset-tractor',
+    name: 'Sunset Tractor',
+    tag: 'Field Sunset',
+    url: '/ag.jpg',
+    focus: 'object-[78%_center] sm:object-[72%_center] lg:object-[80%_center]',
+  },
+  {
+    id: 'golden-harvest',
+    name: 'Golden Harvest',
+    tag: 'Wheat Dusk',
+    url: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=2000&q=80',
+    focus: 'object-center',
+  },
+  {
+    id: 'emerald-agro',
+    name: 'Emerald Farmland',
+    tag: 'High Canopy',
+    url: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=2000&q=80',
+    focus: 'object-[60%_center]',
+  },
+  {
+    id: 'harvest-market',
+    name: 'Fresh Harvest Lots',
+    tag: 'Produce Crates',
+    url: 'https://images.unsplash.com/photo-1615811361523-6bd03d7748e7?auto=format&fit=crop&w=2000&q=80',
+    focus: 'object-center',
+  },
+];
+
 const LOTS_IMAGE = 'https://images.unsplash.com/photo-1615811361523-6bd03d7748e7?auto=format&fit=crop&w=1000&q=80';
 
 interface LandingPageProps {
@@ -54,7 +99,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   };
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [customHeroImage, setCustomHeroImage] = React.useState<string | null>(() => {
+
+  // Background state with persistent storage and fast preset switching
+  const [bgIndex, setBgIndex] = React.useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('cropcoder_hero_bg_id');
+      const idx = HERO_BACKGROUNDS.findIndex((b) => b.id === saved);
+      return idx >= 0 ? idx : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  const [customBg, setCustomBg] = React.useState<string | null>(() => {
     try {
       return localStorage.getItem('cropcoder_custom_hero_image') || null;
     } catch {
@@ -62,46 +119,106 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     }
   });
 
-  const heroImageSrc = customHeroImage || '/ag.jpg';
+  const [autoCycle, setAutoCycle] = React.useState<boolean>(() => {
+    try {
+      return localStorage.getItem('cropcoder_hero_autocycle') === 'true';
+    } catch {
+      return false;
+    }
+  });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Pre-cache all background images eagerly for zero-latency instant transitions
+  React.useEffect(() => {
+    HERO_BACKGROUNDS.forEach((item) => {
+      const img = new Image();
+      img.src = item.url;
+    });
+  }, []);
+
+  // Fast auto-cycle timer (rotates every 4 seconds when active)
+  React.useEffect(() => {
+    if (!autoCycle || customBg) return;
+    const timer = setInterval(() => {
+      setBgIndex((prev) => {
+        const next = (prev + 1) % HERO_BACKGROUNDS.length;
+        try {
+          localStorage.setItem('cropcoder_hero_bg_id', HERO_BACKGROUNDS[next].id);
+        } catch {
+          // ignore storage error
+        }
+        return next;
+      });
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [autoCycle, customBg]);
+
+  const selectBackground = (index: number) => {
+    setCustomBg(null);
+    try {
+      localStorage.removeItem('cropcoder_custom_hero_image');
+      localStorage.setItem('cropcoder_hero_bg_id', HERO_BACKGROUNDS[index].id);
+    } catch {
+      // ignore
+    }
+    setBgIndex(index);
+  };
+
+  const nextBackground = () => {
+    selectBackground((bgIndex + 1) % HERO_BACKGROUNDS.length);
+  };
+
+  const toggleAutoCycle = () => {
+    const next = !autoCycle;
+    setAutoCycle(next);
+    try {
+      localStorage.setItem('cropcoder_hero_autocycle', String(next));
+    } catch {
+      // ignore
+    }
+  };
+
+  // Ultra-fast canvas-compressed image upload handler
+  const handleFastImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        if (result) {
-          setCustomHeroImage(result);
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const src = event.target?.result as string;
+      if (!src) return;
+      const img = new Image();
+      img.onload = () => {
+        const maxW = 1920;
+        const maxH = 1080;
+        let w = img.width;
+        let h = img.height;
+        if (w > maxW || h > maxH) {
+          const ratio = Math.min(maxW / w, maxH / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, w, h);
+          const compressed = canvas.toDataURL('image/jpeg', 0.86);
+          setCustomBg(compressed);
           try {
-            localStorage.setItem('cropcoder_custom_hero_image', result);
+            localStorage.setItem('cropcoder_custom_hero_image', compressed);
           } catch {
-            // Ignore quota limits
+            // ignore storage full
           }
         }
       };
-      reader.readAsDataURL(file);
-    }
+      img.src = src;
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        if (result) {
-          setCustomHeroImage(result);
-          try {
-            localStorage.setItem('cropcoder_custom_hero_image', result);
-          } catch {
-            // Ignore quota limits
-          }
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  const activePreset = HERO_BACKGROUNDS[bgIndex];
+  const activeImageSrc = customBg || activePreset.url;
+  const activeImageFocus = customBg ? 'object-cover object-center' : activePreset.focus;
 
   return (
     <div id="landing-page" className="overflow-hidden">
@@ -109,25 +226,24 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        onChange={handleFileChange}
+        onChange={handleFastImageUpload}
         className="hidden"
-        id="hero-bg-file-input"
+        id="fast-bg-file-input"
       />
       <section
         className="relative flex min-h-[580px] items-center overflow-hidden border-b-4 border-[#e5a83b] bg-[#07130c] text-white sm:min-h-[640px] lg:min-h-[720px]"
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={handleDrop}
       >
-        {/* Full-bleed agricultural hero background photo showing the tractor and crop field at sunset */}
+        {/* Full-bleed agricultural hero background photo with instant smooth cross-fade */}
         <div className="absolute inset-0 z-0 select-none overflow-hidden" aria-hidden="true">
           <img
-            src={heroImageSrc}
-            alt="Agricultural cultivation field with tractor at sunset"
-            className="h-full w-full object-cover object-[78%_center] sm:object-[72%_center] lg:object-[80%_center] scale-[1.01]"
+            key={activeImageSrc}
+            src={activeImageSrc}
+            alt="Agricultural cultivation field at sunset"
+            className={`h-full w-full object-cover ${activeImageFocus} scale-[1.01] transition-opacity duration-300 ease-out`}
             referrerPolicy="no-referrer"
             loading="eager"
           />
-          {/* Dark cinematic gradient scrim matching the Ecoland screenshot: deep contrast on left, open view to tractor on right */}
+          {/* Dark cinematic gradient scrim: deep contrast on left, open view on right */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#07130c]/95 via-[#07130c]/75 via-45% to-black/20 lg:to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#07130c]/90 via-transparent to-[#07130c]/40" />
         </div>
@@ -179,15 +295,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <ArrowRight className="h-3.5 w-3.5 stroke-[2.5]" />
                 </span>
               </button>
-
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                title="Upload custom background image"
-                className="inline-flex items-center justify-center text-xs text-white/60 hover:text-white underline px-3 py-2 cursor-pointer transition-colors sm:self-center"
-              >
-                Change photo
-              </button>
             </div>
 
             {/* Live stats and verification badges */}
@@ -208,6 +315,77 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <ShieldCheck className="h-3.5 w-3.5" />
                 <span>OTP-verified network</span>
               </span>
+            </div>
+
+            {/* Fast Background Switcher / Cycle Controls */}
+            <div className="mt-8 pt-5 border-t border-white/15 flex flex-wrap items-center gap-2 text-xs">
+              <div className="flex items-center gap-1.5 bg-black/50 border border-white/15 rounded-full px-2.5 py-1 backdrop-blur-md">
+                <ImageIcon className="h-3.5 w-3.5 text-[#e5a83b]" />
+                <span className="text-[11px] font-bold uppercase tracking-wider text-white/70 mr-1">Background:</span>
+                {HERO_BACKGROUNDS.map((item, idx) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => selectBackground(idx)}
+                    title={`Switch to ${item.name}`}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${
+                      !customBg && bgIndex === idx
+                        ? 'bg-[#e5a83b] text-[#07130c] font-bold shadow-xs'
+                        : 'text-white/80 hover:text-white hover:bg-white/15'
+                    }`}
+                  >
+                    {item.tag}
+                  </button>
+                ))}
+              </div>
+
+              {/* Fast Next Background Button */}
+              <button
+                type="button"
+                onClick={nextBackground}
+                className="inline-flex items-center gap-1.5 bg-emerald-900/60 hover:bg-emerald-800/80 border border-emerald-500/40 text-emerald-200 hover:text-white rounded-full px-3 py-1.5 text-xs font-bold transition-colors backdrop-blur-md"
+                title="Shift to next farm scene instantly"
+              >
+                <Zap className="h-3 w-3 text-emerald-400 fill-emerald-400" />
+                <span>Change Fast</span>
+              </button>
+
+              {/* Auto Cycle Button */}
+              <button
+                type="button"
+                onClick={toggleAutoCycle}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border transition-colors backdrop-blur-md ${
+                  autoCycle && !customBg
+                    ? 'bg-[#e5a83b]/20 border-[#e5a83b] text-[#e5a83b]'
+                    : 'bg-black/40 border-white/15 text-white/70 hover:text-white hover:bg-white/10'
+                }`}
+                title={autoCycle ? 'Pause auto background shift' : 'Automatically rotate background every 4s'}
+              >
+                {autoCycle && !customBg ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                <span>Auto-Shift {autoCycle && !customBg ? 'Active' : ''}</span>
+              </button>
+
+              {/* Upload Custom Image */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-1.5 bg-black/40 hover:bg-white/10 border border-white/15 text-white/75 hover:text-white rounded-full px-3 py-1.5 text-xs font-medium transition-colors backdrop-blur-md"
+                title="Upload any image directly from your device"
+              >
+                <Upload className="h-3 w-3" />
+                <span>Upload</span>
+              </button>
+
+              {customBg && (
+                <button
+                  type="button"
+                  onClick={() => selectBackground(0)}
+                  className="inline-flex items-center gap-1 text-[11px] text-amber-300 hover:underline px-1 py-1"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  <span>Reset to default</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
