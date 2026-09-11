@@ -84,8 +84,8 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="relative sticky top-0 z-40 border-b border-[var(--forest)]/25 bg-[var(--paper)]/95 text-[var(--ink)] shadow-[0_4px_18px_rgba(18,61,45,0.07)] backdrop-blur-md overflow-hidden">
-      {/* Subtle agricultural field texture background photo */}
+    <header className="relative sticky top-0 z-40 border-b border-[var(--forest)]/25 bg-[var(--paper)]/95 text-[var(--ink)] shadow-[0_4px_18px_rgba(18,61,45,0.07)] backdrop-blur-md">
+      {/* Subtle agricultural field texture background photo strictly contained within its own layer */}
       <div className="absolute inset-0 z-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
         <img
           src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=2000&q=80"
@@ -149,12 +149,12 @@ export const Header: React.FC<HeaderProps> = ({
                   onClick={() => setProfileOpen((prev) => !prev)}
                   className={`group flex items-center gap-2 rounded-xl border px-2.5 py-1.5 text-left transition-all cursor-pointer ${
                     profileOpen
-                      ? 'border-[var(--forest)] bg-white shadow-xs'
+                      ? 'border-[var(--forest)] bg-white shadow-xs ring-2 ring-[var(--forest)]/20'
                       : 'border-[var(--line)] bg-[var(--paper-light)] hover:border-[var(--forest)]/50 hover:bg-white'
                   }`}
                   aria-expanded={profileOpen}
                   aria-haspopup="true"
-                  aria-label={`User profile for ${currentUser.name}`}
+                  aria-label={`User profile for ${currentUser?.name || 'User'}`}
                   title="View your profile and account"
                 >
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--forest)] text-[var(--paper-light)] shadow-xs transition-transform group-hover:scale-105">
@@ -163,14 +163,14 @@ export const Header: React.FC<HeaderProps> = ({
                   <div className="hidden sm:block max-w-[130px] min-w-0">
                     <div className="flex items-center gap-1">
                       <span className="block truncate text-xs font-bold text-[var(--ink)]">
-                        {currentUser.name}
+                        {currentUser?.name || 'Farmer'}
                       </span>
-                      {currentUser.isFPO && (
+                      {currentUser?.isFPO && (
                         <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
                       )}
                     </div>
                     <span className="block truncate text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--brass-deep)]">
-                      {currentUser.isFPO ? 'FPO Verified' : currentUser.district || 'Farmer'}
+                      {currentUser?.isFPO ? 'FPO Verified' : currentUser?.district || 'Farmer'}
                     </span>
                   </div>
                   <ChevronDown
@@ -183,7 +183,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {/* Mobile Backdrop */}
                 {profileOpen && (
                   <div
-                    className="fixed inset-0 z-40 bg-black/30 backdrop-blur-xs sm:hidden"
+                    className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs sm:hidden"
                     onClick={() => setProfileOpen(false)}
                   />
                 )}
@@ -197,12 +197,12 @@ export const Header: React.FC<HeaderProps> = ({
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 6, scale: 0.98 }}
                       transition={{ duration: 0.16, ease: 'easeOut' }}
-                      className="fixed inset-x-4 top-20 z-50 sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-80 rounded-2xl border border-[var(--line)] bg-white p-4 shadow-xl text-[var(--ink)]"
+                      className="fixed inset-x-4 top-20 z-[100] sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2.5 w-auto sm:w-80 rounded-2xl border border-[var(--line)] bg-white p-4 shadow-[0_16px_40px_rgba(11,36,26,0.18)] text-[var(--ink)]"
                     >
                       {/* Top Farmer Identity Header */}
                       <div className="flex items-start gap-3 pb-3 border-b border-[var(--line)]">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--forest)] text-white font-extrabold text-sm shadow-xs">
-                          {currentUser.name
+                          {(currentUser?.name || 'KD')
                             .split(' ')
                             .filter(Boolean)
                             .map((w) => w[0])
@@ -212,11 +212,11 @@ export const Header: React.FC<HeaderProps> = ({
                         </div>
                         <div className="min-w-0 flex-1">
                           <h4 className="truncate text-sm font-extrabold text-[var(--ink)]">
-                            {currentUser.name}
+                            {currentUser?.name || 'Farmer Account'}
                           </h4>
                           <div className="mt-0.5 inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-200/80">
                             <ShieldCheck className="h-3 w-3 text-emerald-600 shrink-0" />
-                            <span>{currentUser.isFPO ? 'Verified FPO Organization' : 'Verified Farmer'}</span>
+                            <span>{currentUser?.isFPO ? 'Verified FPO Organization' : 'Verified Farmer'}</span>
                           </div>
                         </div>
                         <button
@@ -237,7 +237,7 @@ export const Header: React.FC<HeaderProps> = ({
                             <Phone className="h-3.5 w-3.5" />
                           </div>
                           <span className="font-mono text-xs font-semibold text-stone-800">
-                            +91 {currentUser.phone}
+                            {currentUser?.phone ? `+91 ${currentUser.phone}` : 'Registered User'}
                           </span>
                           <span className="ml-auto text-[9px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded">
                             Verified
