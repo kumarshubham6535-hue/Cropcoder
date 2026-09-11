@@ -141,38 +141,5 @@ export const INITIAL_PRODUCE_LISTINGS: ProduceListing[] = [
   },
 ];
 
-export const INITIAL_MARKETPLACE_ORDERS: MarketplaceOrder[] = [
-  {
-    id: 'ord-901',
-    orderNumber: 'KD-2026-09-901',
-    listingId: 'list-201',
-    cropName: 'Karnal HD Wheat (Milling Grade)',
-    farmerName: 'Rajbir Singh Malik',
-    farmerPhone: '+91 98120 34567',
-    farmerPickupLocation: 'Karnal Grain Aggregation Point, Nilokheri',
-    buyerName: 'Anil Chaudhary (Panipat Flour Mills Pvt. Ltd.)',
-    buyerPhone: '+91 98110 44556',
-    buyerType: 'bulk',
-    deliveryAddress: {
-      addressLine: 'Grain Market Road, Sector 13',
-      district: 'Panipat',
-      state: 'Haryana',
-      pincode: '132103',
-    },
-    quantityQuintals: 25,
-    pricePerQuintal: 3000,
-    produceTotal: 75000,
-    logisticsFee: 2200,
-    totalAmount: 77200,
-    traditionalChainCost: 107500,
-    consumerSavings: 30300,
-    farmerEarnings: 75000,
-    farmerGainVsMandi: 10000,
-    status: 'in_transit',
-    createdAt: '2026-09-08T14:30:00Z',
-    estimatedDeliveryDays: 2,
-    logisticsStep: 'Consolidated pickup complete • Transit to Panipat Flour Mills Hub',
-    isScheduledPickup: true,
-    scheduledDate: '2026-09-11',
-  }
-];
+export const INITIAL_MARKETPLACE_ORDERS: MarketplaceOrder[] = [];
+

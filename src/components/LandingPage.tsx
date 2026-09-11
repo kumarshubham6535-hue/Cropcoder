@@ -155,11 +155,76 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
         <div className="grid gap-px border border-[var(--line)] bg-[var(--line)] md:grid-cols-3">
           {[
-            { number: '01', icon: Sprout, title: 'Growers publish the lot', body: 'Share crop, grade, quantity, and pickup point. Your farmgate price stays visible from the first click.' },
-            { number: '02', icon: CircleDollarSign, title: 'Buyers see the context', body: 'Compare available lots with practical price guidance, harvest timing, and source details before you commit.' },
-            { number: '03', icon: Route, title: 'The route gets consolidated', body: 'Collection, dispatch, and delivery milestones stay together so the order is easy to follow end to end.' },
-          ].map(({ number, icon: Icon, title, body }) => (
-            <article key={number} className="group bg-[var(--paper)] p-7 transition-colors hover:bg-white sm:p-9"><div className="mb-12 flex items-start justify-between"><span className="font-mono text-xs font-bold tracking-[0.14em] text-[var(--brass-deep)]">{number}</span><Icon className="h-6 w-6 text-[var(--forest)] transition-transform duration-200 group-hover:-translate-y-1" strokeWidth={1.6} /></div><h3 className="font-display text-2xl tracking-[-0.02em] text-[var(--ink)]">{title}</h3><p className="mt-3 text-sm leading-6 text-[var(--muted-ink)]">{body}</p></article>
+            {
+              id: 'how-it-works-step-1',
+              number: '01',
+              icon: Sprout,
+              title: 'Growers publish the lot',
+              body: 'Share crop, grade, quantity, and pickup point. Your farmgate price stays visible from the first click.',
+              bgImage: 'https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=1000&q=80',
+              tag: 'Farmgate origin',
+            },
+            {
+              id: 'how-it-works-step-2',
+              number: '02',
+              icon: CircleDollarSign,
+              title: 'Buyers see the context',
+              body: 'Compare available lots with practical price guidance, harvest timing, and source details before you commit.',
+              bgImage: 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=1000&q=80',
+              tag: 'Verified pricing',
+            },
+            {
+              id: 'how-it-works-step-3',
+              number: '03',
+              icon: Route,
+              title: 'The route gets consolidated',
+              body: 'Collection, dispatch, and delivery milestones stay together so the order is easy to follow end to end.',
+              bgImage: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=1000&q=80',
+              tag: 'Direct dispatch',
+            },
+          ].map(({ id, number, icon: Icon, title, body, bgImage, tag }) => (
+            <article
+              id={id}
+              key={number}
+              className="group relative overflow-hidden bg-[var(--paper-light)] p-7 transition-all duration-300 sm:p-9 shadow-xs hover:shadow-lg"
+            >
+              {/* Contextual photographic background */}
+              <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none" aria-hidden="true">
+                <img
+                  src={bgImage}
+                  alt=""
+                  referrerPolicy="no-referrer"
+                  className="h-full w-full object-cover object-center opacity-25 filter saturate-[0.85] contrast-[1.05] transition-all duration-700 ease-out group-hover:scale-105 group-hover:opacity-35"
+                />
+                {/* Refined gradient overlay ensuring crystal-clear readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[var(--paper-light)] via-[var(--paper)]/85 to-[var(--paper-light)]/90 transition-opacity duration-300 group-hover:via-[var(--paper)]/75" />
+              </div>
+
+              {/* Card foreground content */}
+              <div className="relative z-10 flex flex-col h-full justify-between">
+                <div>
+                  <div className="mb-10 flex items-start justify-between">
+                    <span className="font-mono text-xs font-bold tracking-[0.14em] text-[var(--brass-deep)] bg-[var(--paper-deep)]/90 px-2.5 py-1 rounded-md border border-[var(--line)] shadow-2xs">
+                      {number}
+                    </span>
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--line)] bg-white/95 text-[var(--forest)] shadow-xs transition-all duration-300 group-hover:border-[var(--forest)]/50 group-hover:bg-white group-hover:text-[var(--forest-dark)] group-hover:shadow-sm">
+                      <Icon className="h-5 w-5 transition-transform duration-300 group-hover:-translate-y-0.5" strokeWidth={1.8} />
+                    </div>
+                  </div>
+                  <h3 className="font-display text-2xl font-bold tracking-[-0.02em] text-[var(--ink)]">
+                    {title}
+                  </h3>
+                  <p className="mt-3 text-sm leading-6 text-[var(--muted-ink)]">
+                    {body}
+                  </p>
+                </div>
+
+                <div className="mt-8 pt-4 border-t border-[var(--line)]/70 flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--forest)]">
+                  <span>{tag}</span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--forest)] group-hover:bg-[var(--brass)] transition-colors" />
+                </div>
+              </div>
+            </article>
           ))}
         </div>
       </section>

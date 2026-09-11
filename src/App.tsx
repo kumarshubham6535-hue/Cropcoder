@@ -22,7 +22,7 @@ import {
 } from './services/supabaseService';
 import { supabase, isSupabaseConfigured } from './services/supabaseClient';
 
-const ORDERS_STORAGE_KEY = 'kd_orders_v7';
+const ORDERS_STORAGE_KEY = 'kd_orders_v8';
 const LISTINGS_STORAGE_KEY = 'kd_listings_v7';
 
 export default function App() {
@@ -83,29 +83,29 @@ export default function App() {
     return INITIAL_PRODUCE_LISTINGS;
   });
 
-  // Orders state - accurately persisted and restored without resurrected deleted/cancelled orders
+  // Orders state - accurately persisted and restored without dummy seed orders for new users
   const [orders, setOrders] = useState<MarketplaceOrder[]>(() => {
     try {
       const saved = localStorage.getItem(ORDERS_STORAGE_KEY);
       if (saved !== null) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          return parsed;
+          return parsed.filter((o) => o.id !== 'ord-901');
         }
       }
 
-      // Check legacy storage once if v7 does not exist yet
-      const legacy = localStorage.getItem('kd_orders_v6') || localStorage.getItem('kd_orders_v5');
+      // Check legacy storage once if v8 does not exist yet, filtering out mock ord-901
+      const legacy = localStorage.getItem('kd_orders_v7') || localStorage.getItem('kd_orders_v6') || localStorage.getItem('kd_orders_v5');
       if (legacy !== null) {
         const parsedLegacy = JSON.parse(legacy);
         if (Array.isArray(parsedLegacy)) {
-          return parsedLegacy;
+          return parsedLegacy.filter((o) => o.id !== 'ord-901');
         }
       }
     } catch {
       // ignore parse error
     }
-    return INITIAL_MARKETPLACE_ORDERS;
+    return [];
   });
 
   // Fetch initial data from Supabase backend on startup
@@ -132,7 +132,8 @@ export default function App() {
           }
 
           if (ordersRes.data && ordersRes.data.length > 0) {
-            setOrders(ordersRes.data);
+            const realOrders = ordersRes.data.filter((o) => o.id !== 'ord-901');
+            setOrders(realOrders);
           }
         }
       } catch (err) {
