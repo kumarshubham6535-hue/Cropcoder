@@ -153,8 +153,8 @@ export const LogisticsOptimizerView: React.FC<LogisticsOptimizerViewProps> = ({ 
   return (
     <div id="logistics-optimizer-container" className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 text-stone-800">
       {/* Top Banner */}
-      <div className="bg-stone-50 p-5 sm:p-6 rounded-2xl border border-stone-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+      <div className="bg-stone-50 p-4 sm:p-6 rounded-2xl border border-stone-200 flex flex-col md:flex-row md:items-center justify-between gap-4 overflow-hidden">
+        <div className="min-w-0 flex-1">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#1B4332] text-xs font-mono font-bold mb-1">
             <span>Nearest-Neighbor Traveling Salesperson Problem (TSP) Engine</span>
           </div>
@@ -167,7 +167,7 @@ export const LogisticsOptimizerView: React.FC<LogisticsOptimizerViewProps> = ({ 
         </div>
 
         {/* Corridor Selection & Simulation Trigger */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="w-full md:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 min-w-0">
           <select
             id="logistics-corridor-select"
             value={selectedCorridorKey}
@@ -175,9 +175,11 @@ export const LogisticsOptimizerView: React.FC<LogisticsOptimizerViewProps> = ({ 
               setSelectedCorridorKey(e.target.value);
               setActiveStep(0);
             }}
-            className="px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs font-bold text-stone-900 shadow-xs cursor-pointer focus:ring-2 focus:ring-[#1B4332]"
+            className="w-full sm:w-auto min-w-0 max-w-full sm:max-w-[280px] md:max-w-[320px] lg:max-w-[380px] px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-xs font-bold text-stone-900 shadow-xs cursor-pointer focus:ring-2 focus:ring-[#1B4332] focus:border-[#1B4332] truncate transition-colors"
+            title="Select logistics corridor"
+            aria-label="Select logistics corridor"
           >
-            <option value="live_network">⚡ Live Marketplace Network ({listings.length} Active Lots)</option>
+            <option value="live_network">⚡ Live Network ({listings.length} Lots)</option>
             {Object.entries(LOGISTICS_CORRIDORS).map(([key, val]) => (
               <option key={key} value={key}>
                 {val.name}
@@ -189,10 +191,10 @@ export const LogisticsOptimizerView: React.FC<LogisticsOptimizerViewProps> = ({ 
             id="simulate-dispatch-btn"
             onClick={handleSimulate}
             disabled={isSimulating}
-            className="px-4 py-2 bg-[#1B4332] hover:bg-[#143326] text-[#D4A24E] font-extrabold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="w-full sm:w-auto shrink-0 justify-center px-4 py-2.5 bg-[#1B4332] hover:bg-[#143326] text-[#D4A24E] font-extrabold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
-            <Truck className="w-4 h-4" />
-            <span>{isSimulating ? 'Dispatch in Transit...' : 'Simulate Collection'}</span>
+            <Truck className="w-4 h-4 shrink-0" />
+            <span className="whitespace-nowrap">{isSimulating ? 'Dispatch in Transit...' : 'Simulate Collection'}</span>
           </button>
         </div>
       </div>
