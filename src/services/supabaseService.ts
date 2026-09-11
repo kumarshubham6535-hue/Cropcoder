@@ -227,7 +227,12 @@ export function mapOrderToDB(order: MarketplaceOrder): Partial<DBMarketplaceOrde
     buyer_name: order.buyerName,
     buyer_phone: order.buyerPhone,
     delivery_address: fullAddress,
-    crop_id: order.cropName.toLowerCase().includes('onion') ? 'onion' : order.cropName.toLowerCase().includes('potato') ? 'potato' : 'tomato',
+    crop_id: order.cropName.toLowerCase().includes('wheat') ? 'wheat'
+      : order.cropName.toLowerCase().includes('mustard') ? 'mustard'
+      : order.cropName.toLowerCase().includes('cotton') ? 'cotton'
+      : order.cropName.toLowerCase().includes('basmati') ? 'rice_basmati'
+      : order.cropName.toLowerCase().includes('bajra') ? 'bajra'
+      : 'wheat',
     crop_name: order.cropName,
     variety: 'Standard Grade-A',
     quantity_quintals: order.quantityQuintals,

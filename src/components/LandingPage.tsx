@@ -1,38 +1,25 @@
 /* Editorial Fieldwork reminder: warm paper surfaces, forest-green trust cues, asymmetrical editorial rhythm, explicit status labels, and calm motion. */
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import {
   ArrowRight,
   ArrowUpRight,
   BarChart3,
   ChevronRight,
   CircleDollarSign,
-  Clapperboard,
   Clock3,
   MapPin,
   PackageCheck,
-  Pause,
-  Play,
-  RotateCcw,
   Route,
   ShieldCheck,
   ShoppingCart,
   Sparkles,
   Sprout,
   Truck,
-  Upload,
   Wheat,
-  Zap,
 } from 'lucide-react';
 import { ActiveTab } from './Header';
 import { ProduceListing } from '../types';
 import { AuthUser } from '../services/authService';
-
-const SCENES = [
-  { id: 'field-sunset', name: 'Field Sunset', src: '/ag.jpg' },
-  { id: 'wheat-dusk', name: 'Wheat Dusk', src: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=2000&q=80' },
-  { id: 'high-canopy', name: 'High Canopy', src: 'https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=2000&q=80' },
-  { id: 'produce-crates', name: 'Produce Crates', src: 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=2000&q=80' },
-];
 
 const LOTS_IMAGE = 'https://images.unsplash.com/photo-1615811361523-6bd03d7748e7?auto=format&fit=crop&w=1000&q=80';
 
@@ -51,63 +38,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   listings = [],
   currentUser,
 }) => {
-  const [activeSceneId, setActiveSceneId] = useState<string>('field-sunset');
-  const [customBg, setCustomBg] = useState<string | null>(() => {
-    return localStorage.getItem('kishandirect_hero_bg') || null;
-  });
-  const [isAutoShift, setIsAutoShift] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Auto-shift effect through scenes
-  useEffect(() => {
-    if (!isAutoShift) return;
-    const interval = setInterval(() => {
-      setActiveSceneId((prev) => {
-        const idx = SCENES.findIndex((s) => s.id === prev);
-        const nextIdx = (idx + 1) % SCENES.length;
-        return SCENES[nextIdx].id;
-      });
-    }, 4500);
-    return () => clearInterval(interval);
-  }, [isAutoShift]);
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const dataUrl = ev.target?.result as string;
-        if (dataUrl) {
-          setCustomBg(dataUrl);
-          try {
-            localStorage.setItem('kishandirect_hero_bg', dataUrl);
-          } catch {
-            // Storage quota handled safely
-          }
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const changeFast = () => {
-    setCustomBg(null);
-    setActiveSceneId((prev) => {
-      const idx = SCENES.findIndex((s) => s.id === prev);
-      const nextIdx = (idx + 1) % SCENES.length;
-      return SCENES[nextIdx].id;
-    });
-  };
-
-  const resetDefault = () => {
-    setCustomBg(null);
-    localStorage.removeItem('kishandirect_hero_bg');
-    setActiveSceneId('field-sunset');
-    setIsAutoShift(false);
-  };
-
-  const activeScene = SCENES.find((s) => s.id === activeSceneId) || SCENES[0];
-  const currentHeroBg = customBg || activeScene.src;
+  const currentHeroBg = 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=2000&q=80';
 
   const activeListings = listings.filter(
     (listing) => listing.status === 'active' && listing.quantityAvailableQuintals > 0,
@@ -130,20 +61,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <section
         className="relative flex min-h-[640px] items-center overflow-hidden border-b-4 border-[#e5a83b] bg-[#07130c] text-white sm:min-h-[700px] lg:min-h-[780px]"
       >
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileUpload}
-          accept="image/*"
-          className="hidden"
-          id="hero-bg-file-input"
-        />
-
         {/* Full-bleed agricultural hero background photo */}
         <div className="absolute inset-0 z-0 select-none overflow-hidden" aria-hidden="true">
           <img
             src={currentHeroBg}
-            alt="Agricultural cultivation field with tractor at sunset"
+            alt="Golden wheat agricultural fields at sunset"
             className="h-full w-full object-cover object-[78%_center] sm:object-[72%_center] lg:object-[80%_center] scale-[1.01] transition-opacity duration-300"
             referrerPolicy="no-referrer"
             loading="eager"
@@ -211,90 +133,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <span>OTP-verified network</span>
               </span>
             </div>
-
-            {/* Scene controls matching the original cropcoder controls bar */}
-            <div className="space-y-2.5 pt-4" id="hero-background-controls">
-              {/* Row 1: SCENE selector pills */}
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/70 px-4 py-1.5 backdrop-blur-md text-xs text-white/90 shadow-lg">
-                  <Clapperboard className="h-3.5 w-3.5 text-[#e5a83b]" />
-                  <span className="font-bold tracking-wider text-[#e5a83b]">SCENE:</span>
-                  <div className="flex items-center gap-1">
-                    {SCENES.map((scene) => {
-                      const isActive = activeSceneId === scene.id && !customBg;
-                      return (
-                        <button
-                          key={scene.id}
-                          type="button"
-                          onClick={() => {
-                            setCustomBg(null);
-                            setActiveSceneId(scene.id);
-                          }}
-                          className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-all ${
-                            isActive
-                              ? 'bg-white/20 text-white font-semibold shadow-inner'
-                              : 'text-white/70 hover:text-white hover:bg-white/10'
-                          }`}
-                        >
-                          {scene.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Row 2: Action buttons (Change Fast, Auto-Shift, Upload, Reset default) */}
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={changeFast}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-emerald-700/80 hover:bg-emerald-600 px-3.5 py-1 text-xs font-semibold text-white border border-emerald-500/40 backdrop-blur-md shadow-md transition-all"
-                  title="Switch immediately to next agricultural scene"
-                >
-                  <Zap className="h-3 w-3 text-emerald-300 fill-emerald-300" />
-                  <span>Change Fast</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setIsAutoShift(!isAutoShift)}
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border backdrop-blur-md shadow-md transition-all ${
-                    isAutoShift
-                      ? 'bg-emerald-600/90 border-emerald-400 text-white'
-                      : 'bg-black/60 hover:bg-black/80 border-white/15 text-white/80'
-                  }`}
-                  title="Toggle automatic scene transitions"
-                >
-                  {isAutoShift ? (
-                    <Pause className="h-3 w-3 text-emerald-200" />
-                  ) : (
-                    <Play className="h-3 w-3 text-white/70 fill-white/70" />
-                  )}
-                  <span>Auto-Shift</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-black/60 hover:bg-black/80 px-3 py-1 text-xs font-medium text-white/80 border border-white/15 backdrop-blur-md shadow-md transition-all"
-                  title="Upload a custom hero image"
-                >
-                  <Upload className="h-3 w-3 text-white/70" />
-                  <span>Upload</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={resetDefault}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-black/60 hover:bg-black/80 px-3 py-1 text-xs font-medium text-[#e5a83b] hover:text-[#f5c358] border border-[#e5a83b]/30 backdrop-blur-md shadow-md transition-all"
-                  title="Reset back to default Field Sunset"
-                >
-                  <RotateCcw className="h-3 w-3 text-[#e5a83b]" />
-                  <span>Reset default</span>
-                </button>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -351,7 +189,27 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </section>
 
-      <section className="mx-5 mb-16 overflow-hidden border border-[var(--forest)] bg-[var(--brass)] sm:mx-8 lg:mx-12 lg:mb-24"><div className="flex flex-col gap-8 px-6 py-10 sm:px-10 lg:flex-row lg:items-center lg:justify-between lg:px-14 lg:py-12"><div><div className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--forest)]"><Clock3 className="h-4 w-4" />Ready when the harvest is.</div><h2 className="max-w-2xl font-display text-4xl leading-[1.02] tracking-[-0.035em] text-[var(--forest)] sm:text-5xl">See today’s lots, then move with confidence.</h2></div><button type="button" onClick={() => goTo('buyer')} className="button-dark group shrink-0">Browse live lots <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /></button></div></section>
+      <section className="mx-5 mb-16 overflow-hidden border border-[var(--forest)]/40 bg-[var(--forest-dark)] text-[var(--paper)] shadow-[0_14px_38px_rgba(11,36,26,0.18)] sm:mx-8 lg:mx-12 lg:mb-24">
+        <div className="flex flex-col gap-8 px-6 py-10 sm:px-10 lg:flex-row lg:items-center lg:justify-between lg:px-14 lg:py-12 bg-gradient-to-br from-[#0f3828] via-[#0b241a] to-[#071912] border-l-4 border-l-[#e5a83b]">
+          <div>
+            <div className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#e5a83b]">
+              <Clock3 className="h-4 w-4 text-[#e5a83b]" />
+              <span>Ready when the harvest is.</span>
+            </div>
+            <h2 className="max-w-2xl font-display text-4xl leading-[1.02] tracking-[-0.035em] text-[var(--paper-light)] sm:text-5xl">
+              See today’s lots, then move with confidence.
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={() => goTo('buyer')}
+            className="group shrink-0 inline-flex items-center gap-2 px-6 py-3.5 bg-[#e5a83b] hover:bg-[#f5c358] text-[#07130c] font-bold text-xs sm:text-sm uppercase tracking-[0.08em] shadow-[3px_3px_0_#07130c] hover:-translate-y-0.5 transition-all"
+          >
+            <span>Browse live lots</span>
+            <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          </button>
+        </div>
+      </section>
     </div>
   );
 };

@@ -5,7 +5,7 @@ import { fetchSupabaseAPMCBenchmarks, DBAPMCBenchmarkRow } from '../services/sup
 import { TrendingUp, Sparkles, DollarSign, Calendar, BarChart2, Info, ArrowUpRight, ArrowDownRight, Database } from 'lucide-react';
 
 export const DemandForecastView: React.FC = () => {
-  const [selectedCropId, setSelectedCropId] = useState<string>('onion');
+  const [selectedCropId, setSelectedCropId] = useState<string>('wheat');
   const [dbBenchmarks, setDbBenchmarks] = useState<DBAPMCBenchmarkRow[]>([]);
   const [isLoadingDB, setIsLoadingDB] = useState<boolean>(false);
 

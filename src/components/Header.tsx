@@ -84,8 +84,19 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--forest)]/20 bg-[var(--paper)]/95 text-[var(--ink)] shadow-[0_4px_18px_rgba(18,61,45,0.07)] backdrop-blur-md">
-      <div className="mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
+    <header className="relative sticky top-0 z-40 border-b border-[var(--forest)]/25 bg-[var(--paper)]/95 text-[var(--ink)] shadow-[0_4px_18px_rgba(18,61,45,0.07)] backdrop-blur-md overflow-hidden">
+      {/* Subtle agricultural field texture background photo */}
+      <div className="absolute inset-0 z-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
+        <img
+          src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=2000&q=80"
+          alt="Agriculture fields"
+          referrerPolicy="no-referrer"
+          className="h-full w-full object-cover object-center opacity-20 filter saturate-150"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--paper)]/95 via-[var(--paper)]/85 to-[var(--paper)]/95 backdrop-blur-[2px]" />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12">
         <div className="flex min-h-[76px] items-center justify-between gap-5">
           <button type="button" onClick={() => selectTab('home')} className="group flex min-w-0 items-center gap-2 sm:gap-3 text-left" aria-label="KishanDirect overview">
             <span className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-black/40 bg-[#060907] shadow-[2.5px_2.5px_0_var(--brass)] transition-transform duration-200 group-hover:-translate-y-0.5">
@@ -337,7 +348,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="header-mobile-menu-toggle"
               type="button"
-              className="icon-button md:hidden"
+              className="inline-flex md:!hidden lg:!hidden xl:!hidden items-center justify-center w-[2.15rem] h-[2.15rem] border border-[var(--line)] bg-transparent text-[var(--forest)] hover:border-[var(--forest)] hover:bg-[var(--paper-deep)] active:scale-95 transition-all"
               onClick={() => setMobileOpen((open) => !open)}
               aria-expanded={mobileOpen}
               aria-controls="mobile-navigation"
@@ -348,13 +359,13 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center justify-between border-t border-[var(--line)] py-2 md:hidden">
+        <div className="flex items-center justify-between border-t border-[var(--line)] py-2 md:!hidden lg:!hidden">
           <button type="button" onClick={() => selectTab(activeTab)} className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--muted-ink)]"><span className="status-dot" aria-hidden="true" />{navigation.find((item) => item.tab === activeTab)?.label}</button>
           <button type="button" onClick={() => setMobileOpen((open) => !open)} className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--forest)]">Navigate <ChevronDown className={`h-3.5 w-3.5 transition-transform ${mobileOpen ? 'rotate-180' : ''}`} /></button>
         </div>
 
         {mobileOpen && (
-          <nav id="mobile-navigation" className="grid grid-cols-2 gap-2 border-t border-[var(--line)] py-3 md:hidden" aria-label="Mobile navigation">
+          <nav id="mobile-navigation" className="grid grid-cols-2 gap-2 border-t border-[var(--line)] py-3 md:!hidden lg:!hidden" aria-label="Mobile navigation">
             {navigation.map(({ tab, mobileLabel }) => {
               const active = activeTab === tab;
               return (

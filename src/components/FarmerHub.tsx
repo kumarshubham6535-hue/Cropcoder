@@ -26,20 +26,11 @@ interface FarmerHubProps {
 }
 
 const SUPPORTED_CROPS = [
-  { id: 'onion', name: 'Nashik Red Onion', state: 'Maharashtra', district: 'Nashik' },
-  { id: 'potato', name: 'Agra Kufri Pukhraj Potatoes', state: 'Uttar Pradesh', district: 'Agra' },
-  { id: 'tomato', name: 'Kolar Hybrid Fresh Tomatoes', state: 'Karnataka', district: 'Kolar' },
-  { id: 'wheat', name: 'Sehore Sharbati Wheat', state: 'Madhya Pradesh', district: 'Sehore' },
-  { id: 'rice_basmati', name: 'Basmati Rice (1121 Raw Aromatic)', state: 'Punjab', district: 'Amritsar' },
-  { id: 'mustard', name: 'Mustard / Sarson (Pusa Bold)', state: 'Rajasthan', district: 'Bharatpur' },
-  { id: 'chili', name: 'Red Chili (Guntur Sannam S4)', state: 'Andhra Pradesh', district: 'Guntur' },
-  { id: 'apple', name: 'Apple (Shimla Royal Delicious)', state: 'Himachal Pradesh', district: 'Shimla' },
-  { id: 'turmeric', name: 'Turmeric / Haldi (Salem Double Polished)', state: 'Tamil Nadu', district: 'Salem' },
-  { id: 'cotton', name: 'Cotton / Kapas (Gujarat Shankar-6)', state: 'Gujarat', district: 'Rajkot' },
-  { id: 'maize', name: 'Yellow Maize / Corn (Purnia High Starch)', state: 'Bihar', district: 'Purnia' },
-  { id: 'soybean', name: 'Soybean / Soyabean (Indore Yellow Gold)', state: 'Madhya Pradesh', district: 'Indore' },
-  { id: 'cardamom', name: 'Cardamom / Elaichi (Idukki 8mm Bold)', state: 'Kerala', district: 'Idukki' },
-  { id: 'sona_masoori', name: 'Sona Masoori Rice (Nalgonda Medium Grain)', state: 'Telangana', district: 'Nalgonda' },
+  { id: 'wheat', name: 'Karnal HD Wheat (Milling Grade)', state: 'Haryana', district: 'Karnal' },
+  { id: 'mustard', name: 'Hisar Sarson (Mustard)', state: 'Haryana', district: 'Hisar' },
+  { id: 'cotton', name: 'Sirsa Narma Cotton (Bt Hybrid)', state: 'Haryana', district: 'Sirsa' },
+  { id: 'rice_basmati', name: 'Karnal Basmati Rice (Pusa 1121)', state: 'Haryana', district: 'Karnal' },
+  { id: 'bajra', name: 'Bhiwani Bajra (Pearl Millet)', state: 'Haryana', district: 'Bhiwani' },
 ];
 
 export const FarmerHub: React.FC<FarmerHubProps> = ({ 
@@ -141,17 +132,17 @@ export const FarmerHub: React.FC<FarmerHubProps> = ({
   const [submitProgressStep, setSubmitProgressStep] = useState<'idle' | 'validating' | 'syncing' | 'complete'>('idle');
   const [justAddedId, setJustAddedId] = useState<string | null>(null);
 
-  const [cropId, setCropId] = useState<string>('onion');
-  const [variety, setVariety] = useState<string>('Garwa High-Solid Red');
-  const [quantity, setQuantity] = useState<number>(40);
-  const [minOrder, setMinOrder] = useState<number>(1);
-  const [askingPrice, setAskingPrice] = useState<number>(2200); // ₹/Quintal
+  const [cropId, setCropId] = useState<string>('wheat');
+  const [variety, setVariety] = useState<string>('HD-3086 Bold Grain');
+  const [quantity, setQuantity] = useState<number>(50);
+  const [minOrder, setMinOrder] = useState<number>(5);
+  const [askingPrice, setAskingPrice] = useState<number>(3000); // ₹/Quintal
   const [harvestDate, setHarvestDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [pickupPoint, setPickupPoint] = useState<string>('FPO Collection Hub, Main Mandi Road');
+  const [pickupPoint, setPickupPoint] = useState<string>('Karnal Grain Aggregation Point, Nilokheri');
 
   // Real-time AI Computed Forecast for the selected crop and current user's district
-  const userDistrict = currentUser?.district || 'Nashik';
-  const userState = currentUser?.state || 'Maharashtra';
+  const userDistrict = currentUser?.district || 'Karnal';
+  const userState = currentUser?.state || 'Haryana';
 
   const forecast = useMemo(() => {
     return generateCropForecast(cropId, userDistrict);
