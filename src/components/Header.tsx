@@ -43,6 +43,24 @@ const navigation: Array<{ tab: ActiveTab; label: string; mobileLabel: string }> 
   { tab: 'orders', label: 'Orders', mobileLabel: 'Orders' },
 ];
 
+/**
+ * Ensures phone numbers display cleanly with a single +91 prefix
+ * without accidental "+91 +91" duplication.
+ */
+const formatDisplayPhone = (phone?: string): string => {
+  if (!phone) return 'Registered User';
+  const trimmed = phone.trim();
+  const digits = trimmed.replace(/\D/g, '');
+  if (digits.length >= 10) {
+    const last10 = digits.slice(-10);
+    return `+91 ${last10.slice(0, 5)} ${last10.slice(5)}`;
+  }
+  if (trimmed.startsWith('+91')) {
+    return trimmed.replace(/^(\+91\s*)+/, '+91 ');
+  }
+  return trimmed ? `+91 ${trimmed}` : 'Registered User';
+};
+
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   onSelectTab,
@@ -237,7 +255,7 @@ export const Header: React.FC<HeaderProps> = ({
                             <Phone className="h-3.5 w-3.5" />
                           </div>
                           <span className="font-mono text-xs font-semibold text-stone-800">
-                            {currentUser?.phone ? `+91 ${currentUser.phone}` : 'Registered User'}
+                            {formatDisplayPhone(currentUser?.phone)}
                           </span>
                           <span className="ml-auto text-[9px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded">
                             Verified

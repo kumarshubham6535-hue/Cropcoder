@@ -787,7 +787,7 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
                     <p className="text-stone-600 text-xs">
                       Enter the 6-digit code sent to{' '}
                       <strong>
-                        {loginMethod === 'email' ? loginEmail.trim() : `+91 ${loginPhone.trim()}`}
+                        {loginMethod === 'email' ? loginEmail.trim() : `+91 ${getCleanDigits(loginPhone)}`}
                       </strong>
                     </p>
                   </div>
@@ -1108,7 +1108,7 @@ export const FarmerAuthModal: React.FC<FarmerAuthModalProps> = ({
             <form onSubmit={handleSignupVerifyOTP} className="space-y-4 text-xs">
               <div className="text-center space-y-1">
                 <p className="text-stone-600 text-xs">
-                  Enter the 6-digit code sent to <strong>+91 {signupPhone}</strong>
+                  Enter the 6-digit code sent to <strong>+91 {getCleanDigits(signupPhone)}</strong>
                 </p>
               </div>
 
